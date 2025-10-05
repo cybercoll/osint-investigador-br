@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSINT Investigador BR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            margin: 20px 0;
+        }
+        
+        .header {
+            background: var(--primary-color);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px 15px 0 0;
+            text-align: center;
+        }
+        
+        .nav-tabs .nav-link {
+            border: none;
+            color: var(--primary-color);
+            font-weight: 500;
+            margin: 0 5px;
+            border-radius: 10px;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background: var(--secondary-color);
+            color: white;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+        
+        .btn-primary {
+            background: var(--secondary-color);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 500;
+        }
+        
+        .btn-success {
+            background: var(--success-color);
+            border: none;
+            border-radius: 10px;
+        }
+        
+        .btn-warning {
+            background: var(--warning-color);
+            border: none;
+            border-radius: 10px;
+        }
+        
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .error-card {
+            background: #fff5f5;
+            border-left-color: var(--danger-color);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner-border {
+            color: var(--secondary-color);
+        }
+        
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .table thead th {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+        }
+        
+        .badge {
+            font-size: 0.8em;
+            padding: 5px 10px;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-container">
+            <div class="header">
+                <h1><i class="fas fa-search"></i> OSINT Investigador BR</h1>
+                <p class="mb-0">Sistema completo para investigações OSINT no Brasil</p>
+            </div>
+            
+            <div class="p-4">
+                <!-- Navegação por abas -->
+                <ul class="nav nav-tabs mb-4" id="mainTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="cep-tab" data-bs-toggle="tab" data-bs-target="#cep" type="button">
+                            <i class="fas fa-map-marker-alt"></i> CEP
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="ddd-tab" data-bs-toggle="tab" data-bs-target="#ddd" type="button">
+                            <i class="fas fa-phone"></i> DDD
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="cnpj-tab" data-bs-toggle="tab" data-bs-target="#cnpj" type="button">
+                            <i class="fas fa-building"></i> CNPJ
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="bancos-tab" data-bs-toggle="tab" data-bs-target="#bancos" type="button">
+                            <i class="fas fa-university"></i> Bancos
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="municipios-tab" data-bs-toggle="tab" data-bs-target="#municipios" type="button">
+                            <i class="fas fa-city"></i> Municípios
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="cache-tab" data-bs-toggle="tab" data-bs-target="#cache" type="button">
+                            <i class="fas fa-database"></i> Cache
+                        </button>
+                    </li>
+                </ul>
+                
+                <!-- Conteúdo das abas -->
+                <div class="tab-content" id="mainTabsContent">
+                    <!-- Aba CEP -->
+                    <div class="tab-pane fade show active" id="cep" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4><i class="fas fa-map-marker-alt text-primary"></i> Consulta de CEP</h4>
+                                <form id="cepForm">
+                                    <div class="mb-3">
+                                        <label for="cepInput" class="form-label">CEP</label>
+                                        <input type="text" class="form-control" id="cepInput" placeholder="00000-000" maxlength="9">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search"></i> Consultar
+                                    </button>
+                                </form>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="loading" id="cepLoading">
+                                    <div class="spinner-border" role="status"></div>
+                                    <p>Consultando CEP...</p>
+                                </div>
+                                <div id="cepResult"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Aba DDD -->
+                    <div class="tab-pane fade" id="ddd" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4><i class="fas fa-phone text-primary"></i> Consulta de DDD</h4>
+                                <form id="dddForm">
+                                    <div class="mb-3">
+                                        <label for="dddInput" class="form-label">DDD</label>
+                                        <input type="text" class="form-control" id="dddInput" placeholder="11" maxlength="2">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search"></i> Consultar
+                                    </button>
+                                </form>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="loading" id="dddLoading">
+                                    <div class="spinner-border" role="status"></div>
+                                    <p>Consultando DDD...</p>
+                                </div>
+                                <div id="dddResult"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Aba CNPJ -->
+                    <div class="tab-pane fade" id="cnpj" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4><i class="fas fa-building text-primary"></i> Consulta de CNPJ</h4>
+                                <form id="cnpjForm">
+                                    <div class="mb-3">
+                                        <label for="cnpjInput" class="form-label">CNPJ</label>
+                                        <input type="text" class="form-control" id="cnpjInput" placeholder="00.000.000/0000-00" maxlength="18">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="fonteSelect" class="form-label">Fonte</label>
+                                        <select class="form-select" id="fonteSelect">
+                                            <option value="brasilapi">Brasil API</option>
+                                            <option value="receitaws">Receita WS</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search"></i> Consultar
+                                    </button>
+                                </form>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="loading" id="cnpjLoading">
+                                    <div class="spinner-border" role="status"></div>
+                                    <p>Consultando CNPJ...</p>
+                                </div>
+                                <div id="cnpjResult"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Aba Bancos -->
+                    <div class="tab-pane fade" id="bancos" role="tabpanel">
+                        <h4><i class="fas fa-university text-primary"></i> Bancos Brasileiros</h4>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <button class="btn btn-primary" onclick="listarBancos()">
+                                    <i class="fas fa-list"></i> Listar Todos os Bancos
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="bancoCodigoInput" placeholder="Código do banco">
+                                    <button class="btn btn-primary" onclick="buscarBanco()">
+                                        <i class="fas fa-search"></i> Buscar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="loading" id="bancosLoading">
+                            <div class="spinner-border" role="status"></div>
+                            <p>Carregando bancos...</p>
+                        </div>
+                        <div id="bancosResult"></div>
+                    </div>
+                    
+                    <!-- Aba Municípios -->
+                    <div class="tab-pane fade" id="municipios" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4><i class="fas fa-city text-primary"></i> Municípios por UF</h4>
+                                <form id="municipiosForm">
+                                    <div class="mb-3">
+                                        <label for="ufSelect" class="form-label">Estado (UF)</label>
+                                        <select class="form-select" id="ufSelect">
+                                            <option value="">Selecione um estado</option>
+                                            <option value="AC">Acre</option>
+                                            <option value="AL">Alagoas</option>
+                                            <option value="AP">Amapá</option>
+                                            <option value="AM">Amazonas</option>
+                                            <option value="BA">Bahia</option>
+                                            <option value="CE">Ceará</option>
+                                            <option value="DF">Distrito Federal</option>
+                                            <option value="ES">Espírito Santo</option>
+                                            <option value="GO">Goiás</option>
+                                            <option value="MA">Maranhão</option>
+                                            <option value="MT">Mato Grosso</option>
+                                            <option value="MS">Mato Grosso do Sul</option>
+                                            <option value="MG">Minas Gerais</option>
+                                            <option value="PA">Pará</option>
+                                            <option value="PB">Paraíba</option>
+                                            <option value="PR">Paraná</option>
+                                            <option value="PE">Pernambuco</option>
+                                            <option value="PI">Piauí</option>
+                                            <option value="RJ">Rio de Janeiro</option>
+                                            <option value="RN">Rio Grande do Norte</option>
+                                            <option value="RS">Rio Grande do Sul</option>
+                                            <option value="RO">Rondônia</option>
+                                            <option value="RR">Roraima</option>
+                                            <option value="SC">Santa Catarina</option>
+                                            <option value="SP">São Paulo</option>
+                                            <option value="SE">Sergipe</option>
+                                            <option value="TO">Tocantins</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search"></i> Consultar
+                                    </button>
+                                </form>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="loading" id="municipiosLoading">
+                                    <div class="spinner-border" role="status"></div>
+                                    <p>Carregando municípios...</p>
+                                </div>
+                                <div id="municipiosResult"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Aba Cache -->
+                    <div class="tab-pane fade" id="cache" role="tabpanel">
+                        <h4><i class="fas fa-database text-primary"></i> Gerenciamento de Cache</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Estatísticas do Cache</h5>
+                                        <div id="cacheStats">
+                                            <p>Carregando estatísticas...</p>
+                                        </div>
+                                        <button class="btn btn-primary" onclick="carregarEstatisticasCache()">
+                                            <i class="fas fa-sync"></i> Atualizar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Ações</h5>
+                                        <button class="btn btn-warning mb-2" onclick="limparCache()">
+                                            <i class="fas fa-trash"></i> Limpar Cache
+                                        </button>
+                                        <div id="cacheActions"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p>&copy; 2024 OSINT Investigador BR - Ferramenta para investigações OSINT no Brasil</p>
+                <p><small>Desenvolvido com ética e respeito à LGPD</small></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
