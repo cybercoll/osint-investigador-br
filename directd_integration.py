@@ -1,6 +1,7 @@
 """
-Integração com Direct Data API v3
+Integração com Direct Data API - Versão Paga
 Sistema completo para consultas de dados pessoais no Brasil
+API: https://app.directd.com.br/
 """
 
 import os
@@ -16,75 +17,76 @@ from utils.logger import log_consulta
 from utils.cache import cache
 
 class DirectDataClient:
-    """Cliente para integração com Direct Data API v3"""
+    """Cliente para integração com Direct Data API - Versão Paga"""
     
     def __init__(self):
-        self.base_url = "https://apiv3.directd.com.br/api"
-        self.token = os.getenv('DIRECTD_TOKEN', '')
+        self.base_url = "https://app.directd.com.br/api"
+        self.token = os.getenv('DIRECTD_TOKEN', 'B8A26730-37E3-4C74-B92E-26EABC7D1324')
         self.timeout = 30
         
     def _make_request(self, endpoint: str, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Faz requisição para a API Direct Data"""
+        """Faz requisição para a API Direct Data - Versão Paga"""
         try:
-            # Adicionar token aos parâmetros
-            params['TOKEN'] = self.token
+            # Headers para API paga
+            headers = {
+                'Authorization': f'Bearer {self.token}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
             
             url = f"{self.base_url}/{endpoint}"
             
             # Log da consulta
-            log_consulta(f"Direct Data - {endpoint}", str(params), "INICIANDO")
+            log_consulta(f"Direct Data Paga - {endpoint}", str(params), "INICIANDO")
             
-            response = requests.get(url, params=params, timeout=self.timeout)
+            # Para API paga, usar POST com JSON
+            response = requests.post(url, json=params, headers=headers, timeout=self.timeout)
             response.raise_for_status()
             
             data = response.json()
             
-            # Verificar se a consulta foi autorizada
-            if data.get('metaDados', {}).get('resultadoId') == 3:
-                log_consulta(f"Direct Data - {endpoint}", str(params), "ERRO", 
-                           data.get('metaDados', {}).get('mensagem', 'Token inválido'))
+            # Verificar se a consulta foi bem-sucedida (estrutura da API paga)
+            if not data.get('success', True):
+                error_msg = data.get('message', 'Erro na consulta')
+                log_consulta(f"Direct Data Paga - {endpoint}", str(params), "ERRO", error_msg)
                 return {
                     'success': False,
-                    'error': 'Token inválido ou não autorizado',
-                    'message': data.get('metaDados', {}).get('mensagem', '')
+                    'error': error_msg,
+                    'message': data.get('details', '')
                 }
             
             # Verificar se há dados de retorno
-            if data.get('retorno') is None:
-                log_consulta(f"Direct Data - {endpoint}", str(params), "SEM_DADOS")
+            if not data.get('data'):
+                log_consulta(f"Direct Data Paga - {endpoint}", str(params), "SEM_DADOS")
                 return {
                     'success': False,
                     'error': 'Nenhum dado encontrado',
                     'message': 'Consulta realizada mas sem dados disponíveis'
                 }
             
-            log_consulta(f"Direct Data - {endpoint}", str(params), "SUCESSO")
+            log_consulta(f"Direct Data Paga - {endpoint}", str(params), "SUCESSO")
             
             return {
                 'success': True,
-                'data': data['retorno'],
-                'metadata': data['metaDados']
+                'data': data['data'],
+                'metadata': data.get('metadata', {})
             }
             
         except requests.exceptions.Timeout:
-            log_consulta(f"Direct Data - {endpoint}", str(params), "ERRO", "Timeout")
+            log_consulta(f"Direct Data Paga - {endpoint}", str(params), "ERRO", "Timeout")
             return {'success': False, 'error': 'Timeout na consulta'}
             
         except requests.exceptions.RequestException as e:
-            log_consulta(f"Direct Data - {endpoint}", str(params), "ERRO", str(e))
+            log_consulta(f"Direct Data Paga - {endpoint}", str(params), "ERRO", str(e))
             return {'success': False, 'error': f'Erro na requisição: {str(e)}'}
             
-        except json.JSONDecodeError:
-            log_consulta(f"Direct Data - {endpoint}", str(params), "ERRO", "JSON inválido")
-            return {'success': False, 'error': 'Resposta inválida da API'}
-            
         except Exception as e:
-            log_consulta(f"Direct Data - {endpoint}", str(params), "ERRO", str(e))
+            log_consulta(f"Direct Data Paga - {endpoint}", str(params), "ERRO", str(e))
             return {'success': False, 'error': f'Erro inesperado: {str(e)}'}
     
     def consultar_por_cpf(self, cpf: str) -> Dict[str, Any]:
         """
-        Consulta dados pessoais por CPF
+        Consulta dados pessoais por CPF - API Paga
         
         Args:
             cpf: CPF para consulta (apenas números)
@@ -99,13 +101,13 @@ class DirectDataClient:
             return {'success': False, 'error': 'CPF deve ter 11 dígitos'}
         
         # Verificar cache
-        cache_key = f"directd_cpf_{cpf_limpo}"
+        cache_key = f"directd_paga_cpf_{cpf_limpo}"
         cached_data = cache.get(cache_key)
         if cached_data:
             return cached_data
         
-        params = {'CPF': cpf_limpo}
-        result = self._make_request('RegistrationDataBrazil', params)
+        params = {'cpf': cpf_limpo}
+        result = self._make_request('pessoa/cpf', params)
         
         # Salvar no cache se sucesso
         if result.get("success"):
@@ -115,52 +117,40 @@ class DirectDataClient:
     
     def consultar_por_nome(self, nome: str, sobrenome: str, data_nascimento: str = None) -> Dict[str, Any]:
         """
-        Consulta dados pessoais por nome completo
+        Consulta dados pessoais por nome completo - API Paga
         
         Args:
             nome: Primeiro nome
             sobrenome: Sobrenome
-            data_nascimento: Data de nascimento no formato YYYY/MM/DD (opcional)
+            data_nascimento: Data de nascimento no formato YYYY-MM-DD (opcional)
             
         Returns:
             Dict com dados pessoais encontrados
         """
         params = {
-            'NAME': nome.upper(),
-            'SURNAME': sobrenome.upper()
+            'nome': nome.strip(),
+            'sobrenome': sobrenome.strip()
         }
         
         if data_nascimento:
-            # Converter data para formato esperado (YYYYMMDD)
-            try:
-                if '/' in data_nascimento:
-                    data_formatada = data_nascimento.replace('/', '')
-                elif '-' in data_nascimento:
-                    data_formatada = data_nascimento.replace('-', '')
-                else:
-                    data_formatada = data_nascimento
-                
-                params['DOB'] = data_formatada
-            except:
-                return {'success': False, 'error': 'Formato de data inválido. Use YYYY/MM/DD'}
+            # Formato esperado: YYYY-MM-DD
+            params['data_nascimento'] = data_nascimento
         
         # Verificar cache
-        cache_key = f"directd_nome_{nome}_{sobrenome}_{data_nascimento or 'sem_data'}"
+        cache_key = f"directd_paga_nome_{nome}_{sobrenome}_{data_nascimento or 'sem_data'}"
         cached_data = cache.get(cache_key)
         if cached_data:
             return cached_data
         
-        result = self._make_request('RegistrationDataBrazil', params)
+        result = self._make_request('pessoa/nome', params)
         
         # Salvar no cache se sucesso
         if result.get("success"):
             cache.set(cache_key, result)
-        
-        return result
     
     def formatar_resultado(self, resultado: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Formata o resultado da consulta para exibição
+        Formata o resultado da consulta para exibição - API Paga
         
         Args:
             resultado: Resultado bruto da API
@@ -173,18 +163,75 @@ class DirectDataClient:
         
         data = resultado.get('data', {})
         
+        # Estrutura da API paga pode ser diferente
+        pessoa = data.get('pessoa', data)
+        
         # Formatar telefones
         telefones = []
-        for phone in data.get('phones', []):
+        for phone in pessoa.get('telefones', []):
             telefones.append({
-                'numero': phone.get('phoneNumber', 'N/A'),
-                'tipo': phone.get('phoneType', 'N/A')
+                'numero': phone.get('numero', 'N/A'),
+                'tipo': phone.get('tipo', 'N/A'),
+                'operadora': phone.get('operadora', 'N/A')
             })
         
         # Formatar endereços
         enderecos = []
-        for address in data.get('addresses', []):
-            endereco_completo = f"{address.get('street', '')}, {address.get('number', '')}"
+        for endereco in pessoa.get('enderecos', []):
+            endereco_completo = f"{endereco.get('logradouro', '')}, {endereco.get('numero', '')}"
+            if endereco.get('complemento'):
+                endereco_completo += f", {endereco.get('complemento')}"
+            
+            enderecos.append({
+                'endereco': endereco_completo,
+                'bairro': endereco.get('bairro', 'N/A'),
+                'cidade': endereco.get('cidade', 'N/A'),
+                'uf': endereco.get('uf', 'N/A'),
+                'cep': endereco.get('cep', 'N/A')
+            })
+        
+        # Formatar emails
+        emails = []
+        for email in pessoa.get('emails', []):
+            emails.append({
+                'email': email.get('endereco', email.get('email', 'N/A')),
+                'tipo': email.get('tipo', 'N/A')
+            })
+        
+        # Dados pessoais
+        dados_pessoais = {
+            'nome': pessoa.get('nome', 'N/A'),
+            'cpf': pessoa.get('cpf', 'N/A'),
+            'data_nascimento': pessoa.get('data_nascimento', 'N/A'),
+            'idade': pessoa.get('idade', 'N/A'),
+            'sexo': pessoa.get('sexo', 'N/A'),
+            'mae': pessoa.get('nome_mae', 'N/A'),
+            'pai': pessoa.get('nome_pai', 'N/A'),
+            'situacao_cpf': pessoa.get('situacao_cpf', 'N/A')
+        }
+        
+        # Dados profissionais
+        dados_profissionais = []
+        for trabalho in pessoa.get('vinculos_profissionais', []):
+            dados_profissionais.append({
+                'empresa': trabalho.get('empresa', 'N/A'),
+                'cargo': trabalho.get('cargo', 'N/A'),
+                'cnpj': trabalho.get('cnpj', 'N/A'),
+                'situacao': trabalho.get('situacao', 'N/A')
+            })
+        
+        return {
+            'success': True,
+            'dados_pessoais': dados_pessoais,
+            'telefones': telefones,
+            'enderecos': enderecos,
+            'emails': emails,
+            'dados_profissionais': dados_profissionais,
+            'total_telefones': len(telefones),
+            'total_enderecos': len(enderecos),
+            'total_emails': len(emails),
+            'metadata': resultado.get('metadata', {})
+        }
             if address.get('complement'):
                 endereco_completo += f", {address.get('complement')}"
             endereco_completo += f" - {address.get('neighborhood', '')}, {address.get('city', '')}/{address.get('state', '')}"
@@ -226,7 +273,7 @@ class DirectDataClient:
     
     def verificar_configuracao(self) -> Dict[str, Any]:
         """
-        Verifica se a API está configurada corretamente
+        Verifica se a API paga está configurada corretamente
         
         Returns:
             Dict com status da configuração
@@ -235,36 +282,44 @@ class DirectDataClient:
             return {
                 'configurado': False,
                 'erro': 'Token Direct Data não configurado',
-                'instrucoes': 'Configure DIRECTD_TOKEN no arquivo .env'
+                'detalhes': 'Configure a variável DIRECTD_TOKEN no arquivo .env'
             }
         
-        # Teste simples com CPF inválido para verificar autenticação
-        test_result = self._make_request('RegistrationDataBrazil', {'CPF': '00000000000'})
-        
-        if 'Token inválido' in test_result.get('error', ''):
+        try:
+            # Teste simples com a API paga
+            test_result = self._make_request('pessoa/cpf', {'cpf': '00000000000'})
+            
+            if test_result.get('success') or 'error' in test_result:
+                return {
+                    'configurado': True,
+                    'status': 'API Direct Data (Paga) configurada e funcionando',
+                    'base_url': self.base_url,
+                    'token_configurado': True
+                }
+            else:
+                return {
+                    'configurado': False,
+                    'erro': 'Erro na comunicação com a API',
+                    'detalhes': test_result.get('error', 'Erro desconhecido')
+                }
+        except Exception as e:
             return {
                 'configurado': False,
-                'erro': 'Token Direct Data inválido',
-                'instrucoes': 'Verifique o token DIRECTD_TOKEN no arquivo .env'
+                'erro': f'Erro ao verificar configuração: {str(e)}',
+                'detalhes': 'Verifique se o token está correto e a API está acessível'
             }
-        
-        return {
-            'configurado': True,
-            'status': 'API Direct Data configurada e funcionando'
-        }
+
 
 # Instância global do cliente
 directd_client = DirectDataClient()
 
 def consultar_dados_pessoais_cpf(cpf: str) -> Dict[str, Any]:
     """Função wrapper para consulta por CPF"""
-    resultado = directd_client.consultar_por_cpf(cpf)
-    return directd_client.formatar_resultado(resultado)
+    return directd_client.consultar_por_cpf(cpf)
 
 def consultar_dados_pessoais_nome(nome: str, sobrenome: str, data_nascimento: str = None) -> Dict[str, Any]:
     """Função wrapper para consulta por nome"""
-    resultado = directd_client.consultar_por_nome(nome, sobrenome, data_nascimento)
-    return directd_client.formatar_resultado(resultado)
+    return directd_client.consultar_por_nome(nome, sobrenome, data_nascimento)
 
 def verificar_directd_config() -> Dict[str, Any]:
     """Função wrapper para verificar configuração"""
