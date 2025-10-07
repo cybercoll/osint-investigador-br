@@ -1,135 +1,99 @@
-"""
-Sistema de cache simples para consultas OSINT
-"""
-import json
-import os
 import time
-from typing import Any, Optional
-from config import CACHE_ENABLED, CACHE_TIMEOUT
+from typing import Any, Optional, Dict
+from threading import Lock
 
+try:
+    from config import CACHE_ENABLED, CACHE_TIMEOUT
+except ImportError:
+    CACHE_ENABLED = True
+    CACHE_TIMEOUT = 3600
 
 class SimpleCache:
-    """Cache simples baseado em arquivos"""
-    
-    def __init__(self, cache_dir: str = "cache"):
-        self.cache_dir = cache_dir
-        self.enabled = CACHE_ENABLED
-        self.timeout = CACHE_TIMEOUT
-        
-        # Cria diretório de cache se não existir
-        if self.enabled and not os.path.exists(cache_dir):
-            os.makedirs(cache_dir)
-    
-    def _get_cache_file(self, key: str) -> str:
-        """Gera nome do arquivo de cache"""
-        # Substitui caracteres especiais por underscore
-        safe_key = "".join(c if c.isalnum() else "_" for c in key)
-        return os.path.join(self.cache_dir, f"{safe_key}.json")
+    def __init__(self):
+        self._cache: Dict[str, Dict[str, Any]] = {}
+        self._lock = Lock()
     
     def get(self, key: str) -> Optional[Any]:
-        """
-        Recupera valor do cache
-        
-        Args:
-            key (str): Chave do cache
-            
-        Returns:
-            Optional[Any]: Valor do cache ou None se não encontrado/expirado
-        """
-        if not self.enabled:
+        if not CACHE_ENABLED:
             return None
-        
-        cache_file = self._get_cache_file(key)
-        
-        if not os.path.exists(cache_file):
-            return None
-        
-        try:
-            with open(cache_file, 'r', encoding='utf-8') as f:
-                cache_data = json.load(f)
             
-            # Verifica se o cache expirou
-            if time.time() - cache_data['timestamp'] > self.timeout:
-                os.remove(cache_file)
-                return None
+        with self._lock:
+            if key in self._cache:
+                entry = self._cache[key]
+                
+                if time.time() > entry['expires_at']:
+                    del self._cache[key]
+                    return None
+                
+                entry['last_accessed'] = time.time()
+                return entry['value']
             
-            return cache_data['data']
-        
-        except (json.JSONDecodeError, KeyError, OSError):
-            # Remove arquivo corrompido
-            try:
-                os.remove(cache_file)
-            except OSError:
-                pass
             return None
     
-    def set(self, key: str, value: Any) -> None:
-        """
-        Armazena valor no cache
-        
-        Args:
-            key (str): Chave do cache
-            value (Any): Valor a ser armazenado
-        """
-        if not self.enabled:
+    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
+        if not CACHE_ENABLED:
             return
-        
-        cache_file = self._get_cache_file(key)
-        
-        cache_data = {
-            'timestamp': time.time(),
-            'data': value
-        }
-        
-        try:
-            with open(cache_file, 'w', encoding='utf-8') as f:
-                json.dump(cache_data, f, ensure_ascii=False, indent=2)
-        except OSError:
-            pass  # Falha silenciosa se não conseguir escrever
+            
+        if ttl is None:
+            ttl = CACHE_TIMEOUT
+            
+        with self._lock:
+            self._cache[key] = {
+                'value': value,
+                'created_at': time.time(),
+                'last_accessed': time.time(),
+                'expires_at': time.time() + ttl
+            }
     
-    def clear(self) -> None:
-        """Remove todos os arquivos de cache"""
-        if not self.enabled or not os.path.exists(self.cache_dir):
-            return
-        
-        try:
-            for filename in os.listdir(self.cache_dir):
-                if filename.endswith('.json'):
-                    os.remove(os.path.join(self.cache_dir, filename))
-        except OSError:
-            pass
+    def delete(self, key: str) -> bool:
+        with self._lock:
+            if key in self._cache:
+                del self._cache[key]
+                return True
+            return False
     
-    def clear_expired(self) -> None:
-        """Remove apenas arquivos de cache expirados"""
-        if not self.enabled or not os.path.exists(self.cache_dir):
-            return
-        
+    def clear(self) -> int:
+        with self._lock:
+            count = len(self._cache)
+            self._cache.clear()
+            return count
+    
+    def cleanup_expired(self) -> int:
+        if not CACHE_ENABLED:
+            return 0
+            
         current_time = time.time()
+        expired_keys = []
         
-        try:
-            for filename in os.listdir(self.cache_dir):
-                if not filename.endswith('.json'):
-                    continue
-                
-                filepath = os.path.join(self.cache_dir, filename)
-                
-                try:
-                    with open(filepath, 'r', encoding='utf-8') as f:
-                        cache_data = json.load(f)
-                    
-                    if current_time - cache_data['timestamp'] > self.timeout:
-                        os.remove(filepath)
-                
-                except (json.JSONDecodeError, KeyError, OSError):
-                    # Remove arquivo corrompido
-                    try:
-                        os.remove(filepath)
-                    except OSError:
-                        pass
+        with self._lock:
+            for key, entry in self._cache.items():
+                if current_time > entry['expires_at']:
+                    expired_keys.append(key)
+            
+            for key in expired_keys:
+                del self._cache[key]
         
-        except OSError:
-            pass
+        return len(expired_keys)
+    
+    def get_stats(self) -> Dict[str, Any]:
+        with self._lock:
+            current_time = time.time()
+            total_items = len(self._cache)
+            expired_items = 0
+            
+            for entry in self._cache.values():
+                if current_time > entry['expires_at']:
+                    expired_items += 1
+            
+            return {
+                'enabled': CACHE_ENABLED,
+                'total_items': total_items,
+                'active_items': total_items - expired_items,
+                'expired_items': expired_items,
+                'default_ttl': CACHE_TIMEOUT
+            }
+    
+    def has_key(self, key: str) -> bool:
+        return self.get(key) is not None
 
-
-# Instância global do cache
 cache = SimpleCache()

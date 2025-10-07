@@ -143,12 +143,12 @@ municipios = osint.consultar_municipios_uf("SP")
 
 ## ⚖️ Aspectos Éticos e Legais
 
-Este projeto foi desenvolvido com foco na **ética** e no **cumprimento da LGPD** (Lei Geral de Proteção de Dados).
+Este projeto foi desenvolvido com foco na **investigação OSINT** e **coleta de dados públicos**.
 
 ### Princípios:
 - ✅ **Dados Públicos**: Uso exclusivo de informações públicas
 - ✅ **APIs Oficiais**: Apenas fontes confiáveis e autorizadas
-- ✅ **LGPD**: Conformidade total com a legislação brasileira
+- ✅ **Investigação**: Ferramenta para pesquisa e análise OSINT
 - ✅ **Transparência**: Código aberto e auditável
 - ✅ **Rate Limiting**: Respeito aos limites das APIs
 - ✅ **Auditoria**: Log completo de todas as operações
@@ -185,7 +185,6 @@ Contribuições são bem-vindas! Por favor:
 
 ### Diretrizes:
 - Respeite os princípios éticos do projeto
-- Mantenha a compatibilidade com a LGPD
 - Documente novas funcionalidades
 - Inclua testes quando aplicável
 
