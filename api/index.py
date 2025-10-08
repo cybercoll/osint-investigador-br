@@ -1,27 +1,39 @@
-from flask import Flask, request, jsonify
+from http.server import BaseHTTPRequestHandler
 import json
 
-app = Flask(__name__)
+class handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/api/health':
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            response = {
+                "status": "ok",
+                "message": "OSINT Investigador BR - Funcionando!",
+                "version": "1.0.0"
+            }
+            self.wfile.write(json.dumps(response).encode())
+        else:
+            self.send_response(404)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            response = {"error": "Not found"}
+            self.wfile.write(json.dumps(response).encode())
 
-@app.route('/api/health', methods=['GET'])
-def health():
-    return jsonify({
-        'status': 'healthy',
-        'service': 'OSINT Investigador BR',
-        'version': '1.0.0'
-    })
-
-@app.route('/api/test', methods=['GET', 'POST'])
-def test():
-    return jsonify({
-        'message': 'API funcionando!',
-        'method': request.method,
-        'status': 'ok'
-    })
-
-# Handler para Vercel
-def handler(request):
-    return app(request.environ, lambda status, headers: None)
-
-if __name__ == '__main__':
-    app.run(debug=False)
+    def do_POST(self):
+        if self.path == '/api/test':
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            response = {
+                "status": "success",
+                "message": "POST endpoint funcionando!",
+                "method": "POST"
+            }
+            self.wfile.write(json.dumps(response).encode())
+        else:
+            self.send_response(404)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            response = {"error": "Not found"}
+            self.wfile.write(json.dumps(response).encode())
