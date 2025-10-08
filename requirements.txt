@@ -1,1 +1,1 @@
-flask==3.0.0
+# Sem dependências - Python puro
