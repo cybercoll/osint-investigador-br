@@ -1,54 +1,69 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify
 import requests
 import json
 import re
 from datetime import datetime
 import sqlite3
 import os
+import tempfile
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 
-# Configuração do banco de dados
-DB_PATH = "osint_database.db"
+# Configuração do banco de dados para ambiente serverless
+def get_db_path():
+    """Retorna o caminho do banco de dados adequado para o ambiente"""
+    if os.environ.get('VERCEL'):
+        # No Vercel, usar diretório temporário
+        return os.path.join(tempfile.gettempdir(), 'osint_database.db')
+    else:
+        # Localmente, usar diretório atual
+        return "osint_database.db"
+
+DB_PATH = get_db_path()
 
 def init_database():
     """Cria as tabelas necessárias se não existirem"""
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
-    # Tabela principal para dados pessoais
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS pessoas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            cpf TEXT UNIQUE NOT NULL,
-            nome TEXT,
-            rg TEXT,
-            cnh TEXT,
-            email TEXT,
-            telefone TEXT,
-            titulo_eleitor TEXT,
-            pis TEXT,
-            cns TEXT,
-            data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    
-    # Índices para otimizar buscas
-    cursor.execute('CREATE INDEX IF NOT EXISTS idx_cpf ON pessoas(cpf)')
-    cursor.execute('CREATE INDEX IF NOT EXISTS idx_nome ON pessoas(nome)')
-    cursor.execute('CREATE INDEX IF NOT EXISTS idx_rg ON pessoas(rg)')
-    cursor.execute('CREATE INDEX IF NOT EXISTS idx_cnh ON pessoas(cnh)')
-    cursor.execute('CREATE INDEX IF NOT EXISTS idx_email ON pessoas(email)')
-    cursor.execute('CREATE INDEX IF NOT EXISTS idx_telefone ON pessoas(telefone)')
-    cursor.execute('CREATE INDEX IF NOT EXISTS idx_titulo_eleitor ON pessoas(titulo_eleitor)')
-    cursor.execute('CREATE INDEX IF NOT EXISTS idx_pis ON pessoas(pis)')
-    cursor.execute('CREATE INDEX IF NOT EXISTS idx_cns ON pessoas(cns)')
-    
-    conn.commit()
-    conn.close()
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        # Tabela principal para dados pessoais
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS pessoas (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                cpf TEXT UNIQUE NOT NULL,
+                nome TEXT,
+                rg TEXT,
+                cnh TEXT,
+                email TEXT,
+                telefone TEXT,
+                titulo_eleitor TEXT,
+                pis TEXT,
+                cns TEXT,
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Índices para otimizar buscas
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_cpf ON pessoas(cpf)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_nome ON pessoas(nome)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_rg ON pessoas(rg)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_cnh ON pessoas(cnh)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_email ON pessoas(email)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_telefone ON pessoas(telefone)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_titulo_eleitor ON pessoas(titulo_eleitor)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_pis ON pessoas(pis)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_cns ON pessoas(cns)')
+        
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"Erro ao inicializar banco: {e}")
+        return False
 
 def buscar_por_cpf(cpf):
     """Busca uma pessoa pelo CPF"""
@@ -463,9 +478,18 @@ def api_catch_all(path):
         ]
     })
 
-# Handler para Vercel
-def handler(request):
-    return app(request.environ, lambda status, headers: None)
+# Handler para Vercel - Configuração otimizada
+app.config['ENV'] = 'production'
+app.config['DEBUG'] = False
+
+# Inicializar o banco de dados apenas uma vez
+try:
+    init_database()
+except Exception as e:
+    print(f"Aviso: Erro na inicialização do banco: {e}")
+
+# Exportar a aplicação diretamente para o Vercel
+# O Vercel espera uma variável chamada 'app' ou uma função handler
 
 if __name__ == '__main__':
     app.run(debug=True)
