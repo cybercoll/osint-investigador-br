@@ -4,18 +4,169 @@ import requests
 import json
 import re
 from datetime import datetime
-import sys
+import sqlite3
 import os
-
-# Adicionar o diretório pai ao path para importar o database
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from database import DatabaseManager
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 
+# Configuração do banco de dados
+DB_PATH = "osint_database.db"
+
+def init_database():
+    """Cria as tabelas necessárias se não existirem"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    # Tabela principal para dados pessoais
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS pessoas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cpf TEXT UNIQUE NOT NULL,
+            nome TEXT,
+            rg TEXT,
+            cnh TEXT,
+            email TEXT,
+            telefone TEXT,
+            titulo_eleitor TEXT,
+            pis TEXT,
+            cns TEXT,
+            data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # Índices para otimizar buscas
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_cpf ON pessoas(cpf)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_nome ON pessoas(nome)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_rg ON pessoas(rg)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_cnh ON pessoas(cnh)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_email ON pessoas(email)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_telefone ON pessoas(telefone)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_titulo_eleitor ON pessoas(titulo_eleitor)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_pis ON pessoas(pis)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_cns ON pessoas(cns)')
+    
+    conn.commit()
+    conn.close()
+
+def buscar_por_cpf(cpf):
+    """Busca uma pessoa pelo CPF"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute('''
+            SELECT cpf, nome, rg, cnh, email, telefone, titulo_eleitor, pis, cns, 
+                   data_criacao, data_atualizacao
+            FROM pessoas 
+            WHERE cpf = ?
+        ''', (cpf,))
+        
+        resultado = cursor.fetchone()
+        
+        if resultado:
+            return {
+                "status": "success",
+                "dados": {
+                    "cpf": resultado[0],
+                    "nome": resultado[1],
+                    "rg": resultado[2],
+                    "cnh": resultado[3],
+                    "email": resultado[4],
+                    "telefone": resultado[5],
+                    "titulo_eleitor": resultado[6],
+                    "pis": resultado[7],
+                    "cns": resultado[8],
+                    "data_criacao": resultado[9],
+                    "data_atualizacao": resultado[10]
+                }
+            }
+        else:
+            return {"status": "not_found", "message": "CPF não encontrado"}
+    
+    except Exception as e:
+        return {"status": "error", "message": f"Erro na busca: {str(e)}"}
+    finally:
+        conn.close()
+
+def inserir_pessoa(cpf, nome=None, rg=None, cnh=None, email=None, telefone=None, titulo_eleitor=None, pis=None, cns=None):
+    """Insere uma nova pessoa no banco de dados"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute('''
+            INSERT INTO pessoas (cpf, nome, rg, cnh, email, telefone, titulo_eleitor, pis, cns)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (cpf, nome, rg, cnh, email, telefone, titulo_eleitor, pis, cns))
+        
+        conn.commit()
+        return {"status": "success", "message": "Pessoa inserida com sucesso"}
+    
+    except sqlite3.IntegrityError:
+        return {"status": "error", "message": "CPF já existe no banco de dados"}
+    except Exception as e:
+        return {"status": "error", "message": f"Erro ao inserir pessoa: {str(e)}"}
+    finally:
+        conn.close()
+
+def buscar_cruzada(**kwargs):
+    """Busca cruzada por múltiplos campos"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    try:
+        # Construir query dinamicamente
+        condicoes = []
+        valores = []
+        
+        for campo, valor in kwargs.items():
+            if valor and valor.strip():
+                condicoes.append(f"{campo} = ?")
+                valores.append(valor.strip())
+        
+        if not condicoes:
+            return {"status": "error", "message": "Nenhum campo de busca fornecido"}
+        
+        query = f'''
+            SELECT cpf, nome, rg, cnh, email, telefone, titulo_eleitor, pis, cns, 
+                   data_criacao, data_atualizacao
+            FROM pessoas 
+            WHERE {' OR '.join(condicoes)}
+        '''
+        
+        cursor.execute(query, valores)
+        resultados = cursor.fetchall()
+        
+        if resultados:
+            dados = []
+            for resultado in resultados:
+                dados.append({
+                    "cpf": resultado[0],
+                    "nome": resultado[1],
+                    "rg": resultado[2],
+                    "cnh": resultado[3],
+                    "email": resultado[4],
+                    "telefone": resultado[5],
+                    "titulo_eleitor": resultado[6],
+                    "pis": resultado[7],
+                    "cns": resultado[8],
+                    "data_criacao": resultado[9],
+                    "data_atualizacao": resultado[10]
+                })
+            
+            return {"status": "success", "dados": dados}
+        else:
+            return {"status": "not_found", "message": "Nenhum resultado encontrado"}
+    
+    except Exception as e:
+        return {"status": "error", "message": f"Erro na busca: {str(e)}"}
+    finally:
+        conn.close()
+
 # Inicializar o banco de dados
-db = DatabaseManager()
+init_database()
 
 @app.route('/')
 def home():
@@ -136,7 +287,7 @@ def api_consultar_cpf_completo():
             }), 400
         
         # Buscar no banco de dados
-        resultado = db.buscar_por_cpf(cpf)
+        resultado = buscar_por_cpf(cpf)
         
         if resultado["status"] == "success":
             response = jsonify({
@@ -202,7 +353,7 @@ def api_inserir_pessoa():
             }), 400
         
         # Inserir no banco de dados
-        resultado = db.inserir_pessoa(
+        resultado = inserir_pessoa(
             cpf=cpf,
             nome=data.get('nome'),
             rg=data.get('rg'),
@@ -263,13 +414,14 @@ def api_buscar_cruzada():
             }), 400
         
         # Buscar no banco de dados
-        resultado = db.buscar_cruzada(**data)
+        resultado = buscar_cruzada(**data)
         
         if resultado["status"] == "success":
+            total_encontrados = len(resultado["dados"])
             response = jsonify({
                 "status": "success",
-                "message": f"Encontrados {resultado['total_encontrados']} registros",
-                "total_encontrados": resultado["total_encontrados"],
+                "message": f"Encontrados {total_encontrados} registros",
+                "total_encontrados": total_encontrados,
                 "dados": resultado["dados"],
                 "timestamp": datetime.now().isoformat()
             })
@@ -310,6 +462,10 @@ def api_catch_all(path):
             "/api/status"
         ]
     })
+
+# Handler para Vercel
+def handler(request):
+    return app(request.environ, lambda status, headers: None)
 
 if __name__ == '__main__':
     app.run(debug=True)
