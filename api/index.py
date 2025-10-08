@@ -223,11 +223,257 @@ def home():
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
         <style>
-            body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
-            .card { box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: none; }
+            body { 
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                min-height: 100vh; 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            }
+            
+            .card { 
+                box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+                border: none; 
+                border-radius: 15px;
+                transition: transform 0.3s ease;
+            }
+            
+            .card:hover {
+                transform: translateY(-5px);
+            }
+            
             .btn-primary { background: #3498db; border: none; }
             .btn-primary:hover { background: #2980b9; }
-            .resultado { max-height: 400px; overflow-y: auto; }
+            .btn-success:hover { background: #27ae60; }
+            .btn-warning:hover { background: #f39c12; }
+            .btn-info:hover { background: #3498db; }
+            .btn-secondary:hover { background: #7f8c8d; }
+            .btn-danger:hover { background: #e74c3c; }
+            
+            .resultado { 
+                max-height: 500px; 
+                overflow-y: auto; 
+                border-radius: 10px;
+                background: #f8f9fa;
+                padding: 15px;
+                margin-top: 20px;
+            }
+            
+            /* Responsive Table Styles */
+            .table-responsive {
+                border-radius: 10px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                overflow: hidden;
+            }
+            
+            .table {
+                margin-bottom: 0;
+                font-size: 0.95rem;
+                background: white;
+            }
+            
+            .table th {
+                background: linear-gradient(135deg, #3498db, #2980b9);
+                color: white;
+                font-weight: 600;
+                text-align: center;
+                padding: 12px 15px;
+                border: none;
+                font-size: 0.9rem;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            
+            .table td {
+                padding: 12px 15px;
+                vertical-align: middle;
+                border-top: 1px solid #dee2e6;
+                text-align: center;
+            }
+            
+            .table-striped tbody tr:nth-of-type(odd) {
+                background-color: rgba(52, 152, 219, 0.05);
+            }
+            
+            .table-hover tbody tr:hover {
+                background-color: rgba(52, 152, 219, 0.1);
+                transform: scale(1.01);
+                transition: all 0.2s ease;
+            }
+            
+            /* Alert Styles */
+            .alert {
+                border: none;
+                border-radius: 10px;
+                padding: 15px 20px;
+                margin-bottom: 20px;
+                font-weight: 500;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            }
+            
+            .alert-success {
+                background: linear-gradient(135deg, #d4edda, #c3e6cb);
+                color: #155724;
+                border-left: 4px solid #28a745;
+            }
+            
+            .alert-danger {
+                background: linear-gradient(135deg, #f8d7da, #f1b0b7);
+                color: #721c24;
+                border-left: 4px solid #dc3545;
+            }
+            
+            .alert-info {
+                background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+                color: #0c5460;
+                border-left: 4px solid #17a2b8;
+            }
+            
+            /* Loading Animation */
+            .spinner-border {
+                width: 3rem;
+                height: 3rem;
+                margin: 20px auto;
+                display: block;
+            }
+            
+            /* Badge Styles */
+            .badge {
+                padding: 8px 12px;
+                border-radius: 20px;
+                font-size: 0.8rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            
+            .badge-success { background: linear-gradient(135deg, #28a745, #20c997); }
+            .badge-danger { background: linear-gradient(135deg, #dc3545, #e83e8c); }
+            .badge-info { background: linear-gradient(135deg, #17a2b8, #6f42c1); }
+            
+            /* Mobile Responsive Design */
+            @media (max-width: 768px) {
+                .container {
+                    padding: 10px;
+                }
+                
+                .card-body {
+                    padding: 15px;
+                }
+                
+                .table-responsive {
+                    font-size: 0.85rem;
+                }
+                
+                .table th, .table td {
+                    padding: 8px 10px;
+                    font-size: 0.8rem;
+                }
+                
+                .btn {
+                    padding: 10px 15px;
+                    font-size: 0.9rem;
+                }
+                
+                .form-control {
+                    padding: 10px 12px;
+                    font-size: 0.9rem;
+                }
+                
+                h1 {
+                    font-size: 1.8rem;
+                }
+                
+                h5 {
+                    font-size: 1.1rem;
+                }
+                
+                .fa-3x {
+                    font-size: 2rem !important;
+                }
+            }
+            
+            @media (max-width: 480px) {
+                .table-responsive {
+                    font-size: 0.75rem;
+                }
+                
+                .table th, .table td {
+                    padding: 6px 8px;
+                    font-size: 0.75rem;
+                }
+                
+                .btn {
+                    padding: 8px 12px;
+                    font-size: 0.85rem;
+                }
+                
+                .card-body {
+                    padding: 10px;
+                }
+                
+                h1 {
+                    font-size: 1.5rem;
+                }
+                
+                .fa-3x {
+                    font-size: 1.5rem !important;
+                }
+            }
+            
+            /* Custom Scrollbar */
+            .resultado::-webkit-scrollbar {
+                width: 8px;
+            }
+            
+            .resultado::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 4px;
+            }
+            
+            .resultado::-webkit-scrollbar-thumb {
+                background: #c1c1c1;
+                border-radius: 4px;
+            }
+            
+            .resultado::-webkit-scrollbar-thumb:hover {
+                background: #a8a8a8;
+            }
+            
+            /* Animation for cards */
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            .card {
+                animation: fadeInUp 0.6s ease-out;
+            }
+            
+            /* Professional table header gradient */
+            .table thead th {
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .table thead th::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+                transition: left 0.5s;
+            }
+            
+            .table thead th:hover::before {
+                left: 100%;
+            }
         </style>
     </head>
     <body>
@@ -370,8 +616,339 @@ def home():
         
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
+            // Função para exportar dados
+            function exportarDados(dados, tipo, formato) {
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                const filename = `osint_${tipo}_${timestamp}`;
+                
+                if (formato === 'json') {
+                    const dataStr = JSON.stringify(dados, null, 2);
+                    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                    const url = URL.createObjectURL(dataBlob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `${filename}.json`;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                } else if (formato === 'csv') {
+                    let csvContent = '';
+                    if (Array.isArray(dados)) {
+                        if (dados.length > 0) {
+                            const headers = Object.keys(dados[0]);
+                            csvContent = headers.join(',') + '\\n';
+                            dados.forEach(row => {
+                                const values = headers.map(header => {
+                                    const value = row[header] || '';
+                                    return `"${String(value).replace(/"/g, '""')}"`;
+                                });
+                                csvContent += values.join(',') + '\\n';
+                            });
+                        }
+                    } else {
+                        const headers = Object.keys(dados);
+                        csvContent = 'Campo,Valor\\n';
+                        headers.forEach(key => {
+                            const value = dados[key] || '';
+                            csvContent += `"${key}","${String(value).replace(/"/g, '""')}"\\n`;
+                        });
+                    }
+                    
+                    const dataBlob = new Blob([csvContent], {type: 'text/csv;charset=utf-8;'});
+                    const url = URL.createObjectURL(dataBlob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `${filename}.csv`;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                }
+            }
+            
+            // Função para criar botões de exportação
+            function criarBotoesExportacao(dados, tipo) {
+                return `
+                    <div class="mt-3 text-center">
+                        <div class="btn-group" role="group" aria-label="Exportar dados">
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="exportarDados(${JSON.stringify(dados).replace(/"/g, '&quot;')}, '${tipo}', 'json')">
+                                <i class="fas fa-download"></i> JSON
+                            </button>
+                            <button type="button" class="btn btn-outline-success btn-sm" onclick="exportarDados(${JSON.stringify(dados).replace(/"/g, '&quot;')}, '${tipo}', 'csv')">
+                                <i class="fas fa-file-csv"></i> CSV
+                            </button>
+                        </div>
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle"></i> Clique para exportar os dados em diferentes formatos
+                            </small>
+                        </div>
+                    </div>
+                `;
+            }
+            
             function mostrarCarregando() {
-                document.getElementById('resultado').innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i><br><br>Consultando...</div>';
+                document.getElementById('resultado').innerHTML = 
+                    '<div class="text-center p-4">' +
+                    '<div class="spinner-border text-primary" role="status">' +
+                    '<span class="sr-only">Carregando...</span>' +
+                    '</div>' +
+                    '<p class="mt-2 text-muted">Processando consulta...</p>' +
+                    '</div>';
+            }
+            
+            function formatarResultadoCEP(data) {
+                if (data.status === 'success') {
+                    const cepData = data.dados || data;
+                    return `
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-check-circle"></i> CEP Encontrado com Sucesso!</h6>
+                        </div>
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0"><i class="fas fa-map-marker-alt"></i> Informações do Endereço</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <tbody>
+                                            <tr><td class="fw-bold text-primary">CEP:</td><td>${cepData.cep || 'N/A'}</td></tr>
+                                            <tr><td class="fw-bold text-primary">Logradouro:</td><td>${cepData.logradouro || 'N/A'}</td></tr>
+                                            <tr><td class="fw-bold text-primary">Bairro:</td><td>${cepData.bairro || 'N/A'}</td></tr>
+                                            <tr><td class="fw-bold text-primary">Cidade:</td><td>${cepData.localidade || cepData.cidade || 'N/A'}</td></tr>
+                                            <tr><td class="fw-bold text-primary">UF:</td><td>${cepData.uf || 'N/A'}</td></tr>
+                                            <tr><td class="fw-bold text-primary">IBGE:</td><td>${cepData.ibge || 'N/A'}</td></tr>
+                                            <tr><td class="fw-bold text-primary">DDD:</td><td>${cepData.ddd || 'N/A'}</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-3 text-muted small">
+                                    <i class="fas fa-info-circle"></i> Fonte: ${data.fonte || 'ViaCEP'} | 
+                                    <i class="fas fa-clock"></i> ${data.timestamp ? new Date(data.timestamp).toLocaleString('pt-BR') : new Date().toLocaleString('pt-BR')}
+                                </div>
+                                ${criarBotoesExportacao(cepData, 'cep')}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            function formatarResultadoDDD(data) {
+                if (data.status === 'success') {
+                    const dddData = data.dados || data;
+                    return `
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-check-circle"></i> DDD Encontrado com Sucesso!</h6>
+                        </div>
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="mb-0"><i class="fas fa-phone"></i> Informações do DDD</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <tbody>
+                                            <tr><td class="fw-bold text-info">DDD:</td><td>${dddData.code || dddData.ddd || 'N/A'}</td></tr>
+                                            <tr><td class="fw-bold text-info">Estado:</td><td>${dddData.state || dddData.estado || 'N/A'}</td></tr>
+                                            <tr><td class="fw-bold text-info">Cidades:</td><td>${Array.isArray(dddData.cities) ? dddData.cities.join(', ') : (dddData.cidades || 'N/A')}</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-3 text-muted small">
+                                    <i class="fas fa-info-circle"></i> Fonte: ${data.fonte || 'BrasilAPI'} | 
+                                    <i class="fas fa-clock"></i> ${data.timestamp ? new Date(data.timestamp).toLocaleString('pt-BR') : new Date().toLocaleString('pt-BR')}
+                                </div>
+                                ${criarBotoesExportacao(dddData, 'ddd')}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            function formatarResultadoCNPJ(data) {
+                if (data.status === 'success') {
+                    const cnpjData = data.dados || data;
+                    return `
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-check-circle"></i> CNPJ Encontrado com Sucesso!</h6>
+                        </div>
+                        <div class="card">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0"><i class="fas fa-building"></i> Informações da Empresa</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <tbody>
+                                            <tr><td class="fw-bold text-success">CNPJ:</td><td>${cnpjData.cnpj || 'N/A'}</td></tr>
+                                            <tr><td class="fw-bold text-success">Razão Social:</td><td>${cnpjData.company?.name || cnpjData.razao_social || 'N/A'}</td></tr>
+                                            <tr><td class="fw-bold text-success">Nome Fantasia:</td><td>${cnpjData.alias || cnpjData.nome_fantasia || 'N/A'}</td></tr>
+                                            <tr><td class="fw-bold text-success">Situação:</td><td><span class="badge ${cnpjData.status === 'OK' ? 'bg-success' : 'bg-warning'}">${cnpjData.status || cnpjData.situacao || 'N/A'}</span></td></tr>
+                                            <tr><td class="fw-bold text-success">Tipo:</td><td>${cnpjData.type || cnpjData.tipo || 'N/A'}</td></tr>
+                                            <tr><td class="fw-bold text-success">Porte:</td><td>${cnpjData.size || cnpjData.porte || 'N/A'}</td></tr>
+                                            <tr><td class="fw-bold text-success">Natureza Jurídica:</td><td>${cnpjData.nature || cnpjData.natureza_juridica || 'N/A'}</td></tr>
+                                            <tr><td class="fw-bold text-success">Atividade Principal:</td><td>${cnpjData.main_activity?.text || cnpjData.atividade_principal || 'N/A'}</td></tr>
+                                            <tr><td class="fw-bold text-success">Telefone:</td><td>${cnpjData.phone || cnpjData.telefone || 'N/A'}</td></tr>
+                                            <tr><td class="fw-bold text-success">Email:</td><td>${cnpjData.email || 'N/A'}</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-3 text-muted small">
+                                    <i class="fas fa-info-circle"></i> Fonte: ${data.fonte || 'BrasilAPI'} | 
+                                    <i class="fas fa-clock"></i> ${data.timestamp ? new Date(data.timestamp).toLocaleString('pt-BR') : new Date().toLocaleString('pt-BR')}
+                                </div>
+                                ${criarBotoesExportacao(cnpjData, 'cnpj')}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            function formatarResultadoCPF(data) {
+                if (data.status === 'success') {
+                    return `
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-check-circle"></i> CPF Validado com Sucesso!</h6>
+                        </div>
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="mb-0"><i class="fas fa-id-card"></i> Validação de CPF</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <tbody>
+                                            <tr><td class="fw-bold text-info">CPF:</td><td>${data.cpf || 'N/A'}</td></tr>
+                                            <tr><td class="fw-bold text-info">Status:</td><td><span class="badge bg-success">Válido</span></td></tr>
+                                            <tr><td class="fw-bold text-info">Algoritmo:</td><td>Validação Matemática Local</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-3 text-muted small">
+                                    <i class="fas fa-info-circle"></i> Validação: Algoritmo Matemático | 
+                                    <i class="fas fa-clock"></i> ${data.timestamp ? new Date(data.timestamp).toLocaleString('pt-BR') : new Date().toLocaleString('pt-BR')}
+                                </div>
+                                ${criarBotoesExportacao(data, 'cpf')}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            function formatarResultadoTelefone(data) {
+                if (data.status === 'success') {
+                    const telData = data.dados || data;
+                    return `
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-check-circle"></i> Telefone Validado com Sucesso!</h6>
+                        </div>
+                        <div class="card">
+                            <div class="card-header bg-secondary text-white">
+                                <h6 class="mb-0"><i class="fas fa-mobile-alt"></i> Informações do Telefone</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <tbody>
+                                            <tr><td class="fw-bold text-secondary">Telefone:</td><td>${data.telefone || 'N/A'}</td></tr>
+                                            <tr><td class="fw-bold text-secondary">DDD:</td><td>${telData.ddd || 'N/A'}</td></tr>
+                                            <tr><td class="fw-bold text-secondary">Tipo:</td><td><span class="badge bg-info">${telData.tipo || 'N/A'}</span></td></tr>
+                                            <tr><td class="fw-bold text-secondary">Estado:</td><td>${telData.estado || 'N/A'}</td></tr>
+                                            <tr><td class="fw-bold text-secondary">Região:</td><td>${telData.regiao || 'N/A'}</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-3 text-muted small">
+                                    <i class="fas fa-info-circle"></i> Fonte: ${data.fonte || 'Validação Local + BrasilAPI'} | 
+                                    <i class="fas fa-clock"></i> ${data.timestamp ? new Date(data.timestamp).toLocaleString('pt-BR') : new Date().toLocaleString('pt-BR')}
+                                </div>
+                                ${criarBotoesExportacao(telData, 'telefone')}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            function formatarResultadoEmail(data) {
+                if (data.status === 'success') {
+                    return `
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-check-circle"></i> Email Validado com Sucesso!</h6>
+                        </div>
+                        <div class="card">
+                            <div class="card-header bg-danger text-white">
+                                <h6 class="mb-0"><i class="fas fa-envelope"></i> Validação de Email</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <tbody>
+                                            <tr><td class="fw-bold text-danger">Email:</td><td>${data.email || 'N/A'}</td></tr>
+                                            <tr><td class="fw-bold text-danger">Formato:</td><td><span class="badge bg-success">Válido</span></td></tr>
+                                            <tr><td class="fw-bold text-danger">Domínio:</td><td>${data.email ? data.email.split('@')[1] : 'N/A'}</td></tr>
+                                            <tr><td class="fw-bold text-danger">Validação:</td><td>Formato + Gamalogic API</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-3 text-muted small">
+                                    <i class="fas fa-info-circle"></i> Fonte: ${data.fonte || 'Validação Local + Gamalogic'} | 
+                                    <i class="fas fa-clock"></i> ${data.timestamp ? new Date(data.timestamp).toLocaleString('pt-BR') : new Date().toLocaleString('pt-BR')}
+                                </div>
+                                ${criarBotoesExportacao(data, 'email')}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            function formatarResultadoEndereco(data) {
+                if (data.status === 'success') {
+                    const enderecos = data.dados?.enderecos || [];
+                    let html = `
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-check-circle"></i> ${enderecos.length} Endereço(s) Encontrado(s)!</h6>
+                        </div>
+                    `;
+                    
+                    enderecos.forEach((endereco, index) => {
+                        html += `
+                            <div class="card mb-3">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0"><i class="fas fa-map-marker-alt"></i> Endereço ${index + 1}</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-hover">
+                                            <tbody>
+                                                <tr><td class="fw-bold text-warning">CEP:</td><td>${endereco.cep || 'N/A'}</td></tr>
+                                                <tr><td class="fw-bold text-warning">Logradouro:</td><td>${endereco.street || endereco.logradouro || 'N/A'}</td></tr>
+                                                <tr><td class="fw-bold text-warning">Bairro:</td><td>${endereco.district || endereco.bairro || 'N/A'}</td></tr>
+                                                <tr><td class="fw-bold text-warning">Cidade:</td><td>${endereco.city || endereco.cidade || 'N/A'}</td></tr>
+                                                <tr><td class="fw-bold text-warning">UF:</td><td>${endereco.state || endereco.uf || 'N/A'}</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `
+                        <div class="mt-3 text-muted small">
+                            <i class="fas fa-info-circle"></i> Fonte: ${data.fonte || 'BrasilAPI'} | 
+                            <i class="fas fa-clock"></i> ${data.timestamp ? new Date(data.timestamp).toLocaleString('pt-BR') : new Date().toLocaleString('pt-BR')}
+                        </div>
+                        ${criarBotoesExportacao(data.dados, 'endereco')}
+                    `;
+                    
+                    return html;
+                }
+            }
+            
+            function formatarErro(message, tipo = 'danger') {
+                return `
+                    <div class="alert alert-${tipo}">
+                        <h6><i class="fas fa-exclamation-triangle"></i> Erro na Consulta</h6>
+                        <p class="mb-0">${message}</p>
+                    </div>
+                `;
             }
             
             function consultarCEP() {
@@ -389,17 +966,13 @@ def home():
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        document.getElementById('resultado').innerHTML = 
-                            '<div class="alert alert-success"><h6><i class="fas fa-check-circle"></i> CEP Encontrado!</h6></div>' +
-                            '<pre class="bg-light p-3 rounded">' + JSON.stringify(data, null, 2) + '</pre>';
+                        document.getElementById('resultado').innerHTML = formatarResultadoCEP(data);
                     } else {
-                        document.getElementById('resultado').innerHTML = 
-                            '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ' + (data.message || data.erro) + '</div>';
+                        document.getElementById('resultado').innerHTML = formatarErro(data.message || data.erro);
                     }
                 })
                 .catch(error => {
-                    document.getElementById('resultado').innerHTML = 
-                        '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> Erro na consulta: ' + error + '</div>';
+                    document.getElementById('resultado').innerHTML = formatarErro('Erro na consulta: ' + error);
                 });
             }
             
@@ -418,17 +991,13 @@ def home():
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        document.getElementById('resultado').innerHTML = 
-                            '<div class="alert alert-success"><h6><i class="fas fa-check-circle"></i> DDD Encontrado!</h6></div>' +
-                            '<pre class="bg-light p-3 rounded">' + JSON.stringify(data, null, 2) + '</pre>';
+                        document.getElementById('resultado').innerHTML = formatarResultadoDDD(data);
                     } else {
-                        document.getElementById('resultado').innerHTML = 
-                            '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ' + (data.message || data.erro) + '</div>';
+                        document.getElementById('resultado').innerHTML = formatarErro(data.message || data.erro);
                     }
                 })
                 .catch(error => {
-                    document.getElementById('resultado').innerHTML = 
-                        '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> Erro na consulta: ' + error + '</div>';
+                    document.getElementById('resultado').innerHTML = formatarErro('Erro na consulta: ' + error);
                 });
             }
             
@@ -447,17 +1016,13 @@ def home():
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        document.getElementById('resultado').innerHTML = 
-                            '<div class="alert alert-success"><h6><i class="fas fa-check-circle"></i> CNPJ Encontrado!</h6></div>' +
-                            '<pre class="bg-light p-3 rounded">' + JSON.stringify(data, null, 2) + '</pre>';
+                        document.getElementById('resultado').innerHTML = formatarResultadoCNPJ(data);
                     } else {
-                        document.getElementById('resultado').innerHTML = 
-                            '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ' + (data.message || data.erro) + '</div>';
+                        document.getElementById('resultado').innerHTML = formatarErro(data.message || data.erro);
                     }
                 })
                 .catch(error => {
-                    document.getElementById('resultado').innerHTML = 
-                        '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> Erro na consulta: ' + error + '</div>';
+                    document.getElementById('resultado').innerHTML = formatarErro('Erro na consulta: ' + error);
                 });
             }
             
@@ -476,17 +1041,13 @@ def home():
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        document.getElementById('resultado').innerHTML = 
-                            '<div class="alert alert-success"><h6><i class="fas fa-check-circle"></i> CPF Válido!</h6></div>' +
-                            '<pre class="bg-light p-3 rounded">' + JSON.stringify(data, null, 2) + '</pre>';
+                        document.getElementById('resultado').innerHTML = formatarResultadoCPF(data);
                     } else {
-                        document.getElementById('resultado').innerHTML = 
-                            '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ' + (data.message || data.erro) + '</div>';
+                        document.getElementById('resultado').innerHTML = formatarErro(data.message || data.erro);
                     }
                 })
                 .catch(error => {
-                    document.getElementById('resultado').innerHTML = 
-                        '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> Erro na consulta: ' + error + '</div>';
+                    document.getElementById('resultado').innerHTML = formatarErro('Erro na consulta: ' + error);
                 });
             }
             
@@ -505,17 +1066,13 @@ def home():
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        document.getElementById('resultado').innerHTML = 
-                            '<div class="alert alert-success"><h6><i class="fas fa-check-circle"></i> Telefone Válido!</h6></div>' +
-                            '<pre class="bg-light p-3 rounded">' + JSON.stringify(data, null, 2) + '</pre>';
+                        document.getElementById('resultado').innerHTML = formatarResultadoTelefone(data);
                     } else {
-                        document.getElementById('resultado').innerHTML = 
-                            '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ' + (data.message || data.erro) + '</div>';
+                        document.getElementById('resultado').innerHTML = formatarErro(data.message || data.erro);
                     }
                 })
                 .catch(error => {
-                    document.getElementById('resultado').innerHTML = 
-                        '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> Erro na consulta: ' + error + '</div>';
+                    document.getElementById('resultado').innerHTML = formatarErro('Erro na consulta: ' + error);
                 });
             }
             
@@ -534,17 +1091,13 @@ def home():
                  .then(response => response.json())
                  .then(data => {
                      if (data.status === 'success') {
-                         document.getElementById('resultado').innerHTML = 
-                             '<div class="alert alert-success"><h6><i class="fas fa-check-circle"></i> Email Válido!</h6></div>' +
-                             '<pre class="bg-light p-3 rounded">' + JSON.stringify(data, null, 2) + '</pre>';
+                         document.getElementById('resultado').innerHTML = formatarResultadoEmail(data);
                      } else {
-                         document.getElementById('resultado').innerHTML = 
-                             '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ' + (data.message || data.erro) + '</div>';
+                         document.getElementById('resultado').innerHTML = formatarErro(data.message || data.erro);
                      }
                  })
                  .catch(error => {
-                     document.getElementById('resultado').innerHTML = 
-                         '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> Erro na consulta: ' + error + '</div>';
+                     document.getElementById('resultado').innerHTML = formatarErro('Erro na consulta: ' + error);
                  });
              }
              
@@ -571,17 +1124,13 @@ def home():
                  .then(response => response.json())
                  .then(data => {
                      if (data.status === 'success') {
-                         document.getElementById('resultado').innerHTML = 
-                             '<div class="alert alert-success"><h6><i class="fas fa-check-circle"></i> Endereços Encontrados!</h6></div>' +
-                             '<pre class="bg-light p-3 rounded">' + JSON.stringify(data, null, 2) + '</pre>';
+                         document.getElementById('resultado').innerHTML = formatarResultadoEndereco(data);
                      } else {
-                         document.getElementById('resultado').innerHTML = 
-                             '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ' + (data.message || data.erro) + '</div>';
+                         document.getElementById('resultado').innerHTML = formatarErro(data.message || data.erro);
                      }
                  })
                  .catch(error => {
-                     document.getElementById('resultado').innerHTML = 
-                         '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> Erro na consulta: ' + error + '</div>';
+                     document.getElementById('resultado').innerHTML = formatarErro('Erro na consulta: ' + error);
                  });
              }
         </script>
