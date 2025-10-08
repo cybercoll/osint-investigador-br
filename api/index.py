@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import requests
 import json
 import re
@@ -8,7 +8,7 @@ import sqlite3
 import os
 import tempfile
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='../templates', static_folder='../static')
 app.config['JSON_AS_ASCII'] = False
 
 # Configuração do banco de dados para ambiente serverless
@@ -185,8 +185,8 @@ init_database()
 
 @app.route('/')
 def home():
-    """Página principal simples"""
-    return "<h1>OSINT Investigador BR - Versão Simples</h1>"
+    """Página principal com interface web completa"""
+    return render_template('index.html')
 
 @app.route('/api')
 def api_info():
