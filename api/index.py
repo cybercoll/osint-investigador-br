@@ -1,25 +1,50 @@
-def handler(request):
+from flask import Flask, jsonify, request
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
     """
-    Vercel Serverless Function Handler
+    Rota principal da API
     """
-    import json
-    
-    # Resposta básica para qualquer requisição
     response_data = {
         "status": "success",
         "message": "OSINT Investigador BR - API Funcionando!",
         "version": "1.0.0",
-        "method": request.method if hasattr(request, 'method') else "UNKNOWN",
-        "path": request.path if hasattr(request, 'path') else "/"
+        "method": request.method,
+        "path": request.path
     }
-    
-    return {
-        'statusCode': 200,
-        'headers': {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type'
-        },
-        'body': json.dumps(response_data)
+    return jsonify(response_data)
+
+@app.route('/api')
+def api():
+    """
+    Rota da API
+    """
+    response_data = {
+        "status": "success",
+        "message": "OSINT Investigador BR - API Funcionando!",
+        "version": "1.0.0",
+        "method": request.method,
+        "path": request.path,
+        "endpoint": "api"
     }
+    return jsonify(response_data)
+
+@app.route('/api/<path:path>')
+def api_catch_all(path):
+    """
+    Rota catch-all para /api/*
+    """
+    response_data = {
+        "status": "success",
+        "message": "OSINT Investigador BR - API Funcionando!",
+        "version": "1.0.0",
+        "method": request.method,
+        "path": request.path,
+        "endpoint": f"api/{path}"
+    }
+    return jsonify(response_data)
+
+if __name__ == '__main__':
+    app.run(debug=True)
