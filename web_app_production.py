@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 # Carrega variáveis de ambiente
 load_dotenv()
 
-# Inicialização do Flask
+# Exporta a aplicação para Vercel
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'osint-investigador-br-2024')
 
@@ -200,13 +200,10 @@ def internal_error(error):
     logger.error(f"Erro interno: {str(error)}")
     return jsonify({'erro': 'Erro interno do servidor'}), 500
 
-# Handler para Vercel (serverless function)
-def handler(request):
-    """Handler principal para Vercel"""
-    return app(request.environ, request.start_response)
-
-# Exporta a aplicação para Vercel
-application = app
+# Função principal para Vercel
+def handler(event, context):
+    """Handler principal para Vercel serverless"""
+    return app
 
 if __name__ == '__main__':
     # Configuração para desenvolvimento local

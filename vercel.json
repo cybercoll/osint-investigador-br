@@ -1,15 +1,14 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "web_app_production.py",
-      "use": "@vercel/python"
+  "functions": {
+    "web_app_production.py": {
+      "runtime": "@vercel/python"
     }
-  ],
+  },
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "web_app_production.py"
+      "dest": "/web_app_production.py"
     }
   ],
   "env": {
