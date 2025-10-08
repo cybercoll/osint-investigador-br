@@ -1226,10 +1226,16 @@ if (dadosPessoaisForm) {
         const telefone = document.getElementById('dadosPessoaisTelefoneInput').value.replace(/\D/g, '');
         const cpf = document.getElementById('dadosPessoaisCpfInput') ? document.getElementById('dadosPessoaisCpfInput').value.replace(/\D/g, '') : '';
         const nome = document.getElementById('dadosPessoaisNomeInput') ? document.getElementById('dadosPessoaisNomeInput').value.trim() : '';
+        const rg = document.getElementById('dadosPessoaisRgInput') ? document.getElementById('dadosPessoaisRgInput').value.replace(/\D/g, '') : '';
+        const cnh = document.getElementById('dadosPessoaisCnhInput') ? document.getElementById('dadosPessoaisCnhInput').value.replace(/\D/g, '') : '';
+        const email = document.getElementById('dadosPessoaisEmailInput') ? document.getElementById('dadosPessoaisEmailInput').value.trim() : '';
+        const tituloEleitor = document.getElementById('dadosPessoaisTituloEleitorInput') ? document.getElementById('dadosPessoaisTituloEleitorInput').value.replace(/\D/g, '') : '';
+        const pis = document.getElementById('dadosPessoaisPisInput') ? document.getElementById('dadosPessoaisPisInput').value.replace(/\D/g, '') : '';
+        const cns = document.getElementById('dadosPessoaisCnsInput') ? document.getElementById('dadosPessoaisCnsInput').value.replace(/\D/g, '') : '';
         const dataNascimento = document.getElementById('dadosPessoaisDataNascInput') ? document.getElementById('dadosPessoaisDataNascInput').value.replace(/\D/g, '') : '';
         
         // Verificar se pelo menos um campo foi preenchido
-        if (!telefone && !cpf && !nome && !dataNascimento) {
+        if (!telefone && !cpf && !nome && !rg && !cnh && !email && !tituloEleitor && !pis && !cns && !dataNascimento) {
             showResult('dadosPessoaisResult', `
                 <div class="result-card error-card">
                     <h5><i class="fas fa-exclamation-triangle text-danger"></i> Erro</h5>
@@ -1260,6 +1266,36 @@ if (dadosPessoaisForm) {
             return;
         }
         
+        if (tituloEleitor && tituloEleitor.length !== 12) {
+            showResult('dadosPessoaisResult', `
+                <div class="result-card error-card">
+                    <h5><i class="fas fa-exclamation-triangle text-danger"></i> Erro</h5>
+                    <p>Título de eleitor deve ter 12 dígitos</p>
+                </div>
+            `);
+            return;
+        }
+        
+        if (pis && pis.length !== 11) {
+            showResult('dadosPessoaisResult', `
+                <div class="result-card error-card">
+                    <h5><i class="fas fa-exclamation-triangle text-danger"></i> Erro</h5>
+                    <p>PIS deve ter 11 dígitos</p>
+                </div>
+            `);
+            return;
+        }
+        
+        if (cns && cns.length !== 15) {
+            showResult('dadosPessoaisResult', `
+                <div class="result-card error-card">
+                    <h5><i class="fas fa-exclamation-triangle text-danger"></i> Erro</h5>
+                    <p>CNS deve ter 15 dígitos</p>
+                </div>
+            `);
+            return;
+        }
+        
         if (dataNascimento && dataNascimento.length !== 8) {
             showResult('dadosPessoaisResult', `
                 <div class="result-card error-card">
@@ -1273,40 +1309,89 @@ if (dadosPessoaisForm) {
         showLoading('dadosPessoaisLoading');
         
         try {
-            // Usar a API avançada se houver múltiplos campos ou usar a API simples para telefone apenas
-            let response;
-            if (cpf || nome || dataNascimento || (telefone && (cpf || nome || dataNascimento))) {
-                // Consulta avançada
-                const requestData = {};
-                if (telefone) requestData.telefone = telefone;
-                if (cpf) requestData.cpf = cpf;
-                if (nome) requestData.nome = nome;
-                if (dataNascimento) {
-                    // Converter para formato YYYY-MM-DD
-                    const day = dataNascimento.substring(0, 2);
-                    const month = dataNascimento.substring(2, 4);
-                    const year = dataNascimento.substring(4, 8);
-                    requestData.data_nascimento = `${year}-${month}-${day}`;
-                }
-                
-                response = await fetch('/api/consultar/dados-pessoais-avancado', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(requestData)
-                });
-            } else {
-                // Consulta simples por telefone
-                response = await fetch(`/api/dados-pessoais/${telefone}`);
+            // Usar a nova API de busca cruzada
+            const requestData = {};
+            if (telefone) requestData.telefone = telefone;
+            if (cpf) requestData.cpf = cpf;
+            if (nome) requestData.nome = nome;
+            if (rg) requestData.rg = rg;
+            if (cnh) requestData.cnh = cnh;
+            if (email) requestData.email = email;
+            if (tituloEleitor) requestData.titulo_eleitor = tituloEleitor;
+            if (pis) requestData.pis = pis;
+            if (cns) requestData.cns = cns;
+            if (dataNascimento) {
+                // Converter para formato YYYY-MM-DD
+                const day = dataNascimento.substring(0, 2);
+                const month = dataNascimento.substring(2, 4);
+                const year = dataNascimento.substring(4, 8);
+                requestData.data_nascimento = `${year}-${month}-${day}`;
             }
+            
+            const response = await fetch('/api/buscar/cruzada', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            });
             
             const data = await response.json();
             
             setTimeout(() => {
                 hideLoading('dadosPessoaisLoading');
                 
-                if ((data.success && data.data) || (!data.erro && data.dados_encontrados)) {
+                if (data.dados && data.dados.length > 0) {
+                    // Exibir resultados da busca cruzada
+                    const resultados = data.dados.map(pessoa => `
+                        <div class="result-card success-card mb-3">
+                            <h5><i class="fas fa-user text-success"></i> Dados Encontrados</h5>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <strong>Nome:</strong> ${pessoa.nome || 'N/A'}
+                                </div>
+                                <div class="info-item">
+                                    <strong>CPF:</strong> ${pessoa.cpf || 'N/A'}
+                                </div>
+                                <div class="info-item">
+                                    <strong>RG:</strong> ${pessoa.rg || 'N/A'}
+                                </div>
+                                <div class="info-item">
+                                    <strong>CNH:</strong> ${pessoa.cnh || 'N/A'}
+                                </div>
+                                <div class="info-item">
+                                    <strong>Email:</strong> ${pessoa.email || 'N/A'}
+                                </div>
+                                <div class="info-item">
+                                    <strong>Telefone:</strong> ${pessoa.telefone || 'N/A'}
+                                </div>
+                                <div class="info-item">
+                                    <strong>Título de Eleitor:</strong> ${pessoa.titulo_eleitor || 'N/A'}
+                                </div>
+                                <div class="info-item">
+                                    <strong>PIS:</strong> ${pessoa.pis || 'N/A'}
+                                </div>
+                                <div class="info-item">
+                                    <strong>CNS:</strong> ${pessoa.cns || 'N/A'}
+                                </div>
+                                <div class="info-item">
+                                    <strong>Data de Criação:</strong> ${pessoa.data_criacao || 'N/A'}
+                                </div>
+                                <div class="info-item">
+                                    <strong>Última Atualização:</strong> ${pessoa.data_atualizacao || 'N/A'}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    showResult('dadosPessoaisResult', `
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            <strong>Busca Concluída!</strong> Encontrados ${data.dados.length} resultado(s).
+                        </div>
+                        ${resultados}
+                    `);
+                } else if ((data.success && data.data) || (!data.erro && data.dados_encontrados)) {
                     const pessoaData = data.data || data;
                     
                     showResult('dadosPessoaisResult', `
