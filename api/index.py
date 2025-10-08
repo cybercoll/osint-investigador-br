@@ -102,6 +102,9 @@ def home():
                                             <i class="fas fa-map-marker-alt fa-3x text-primary mb-3"></i>
                                             <h5>Consulta CEP</h5>
                                             <p class="text-muted">Consulte informações de endereço por CEP</p>
+                                            <div class="mb-3">
+                                                <input type="text" id="cepInput" class="form-control" placeholder="Digite o CEP (ex: 01310-100)" maxlength="9">
+                                            </div>
                                             <button class="btn btn-primary" onclick="consultarCEP()">Consultar CEP</button>
                                         </div>
                                     </div>
@@ -112,6 +115,9 @@ def home():
                                             <i class="fas fa-phone fa-3x text-success mb-3"></i>
                                             <h5>Consulta DDD</h5>
                                             <p class="text-muted">Consulte informações de DDD</p>
+                                            <div class="mb-3">
+                                                <input type="text" id="dddInput" class="form-control" placeholder="Digite o DDD (ex: 11, 21, 85)" maxlength="2">
+                                            </div>
                                             <button class="btn btn-success" onclick="consultarDDD()">Consultar DDD</button>
                                         </div>
                                     </div>
@@ -122,6 +128,9 @@ def home():
                                             <i class="fas fa-building fa-3x text-warning mb-3"></i>
                                             <h5>Consulta CNPJ</h5>
                                             <p class="text-muted">Consulte informações de empresa</p>
+                                            <div class="mb-3">
+                                                <input type="text" id="cnpjInput" class="form-control" placeholder="Digite o CNPJ (ex: 11.222.333/0001-81)" maxlength="18">
+                                            </div>
                                             <button class="btn btn-warning" onclick="consultarCNPJ()">Consultar CNPJ</button>
                                         </div>
                                     </div>
@@ -153,84 +162,90 @@ def home():
             }
             
             function consultarCEP() {
-                const cep = prompt("Digite o CEP (ex: 01310-100):");
-                if (cep) {
-                    mostrarCarregando();
-                    fetch('/api/consultar/cep', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ cep: cep })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            document.getElementById('resultado').innerHTML = 
-                                '<div class="alert alert-success"><h6><i class="fas fa-check-circle"></i> CEP Encontrado!</h6></div>' +
-                                '<pre class="bg-light p-3 rounded">' + JSON.stringify(data, null, 2) + '</pre>';
-                        } else {
-                            document.getElementById('resultado').innerHTML = 
-                                '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ' + (data.message || data.erro) + '</div>';
-                        }
-                    })
-                    .catch(error => {
-                        document.getElementById('resultado').innerHTML = 
-                            '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> Erro na consulta: ' + error + '</div>';
-                    });
+                const cep = document.getElementById('cepInput').value;
+                if (!cep) {
+                    alert('Por favor, digite um CEP válido');
+                    return;
                 }
+                mostrarCarregando();
+                fetch('/api/consultar/cep', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cep: cep })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        document.getElementById('resultado').innerHTML = 
+                            '<div class="alert alert-success"><h6><i class="fas fa-check-circle"></i> CEP Encontrado!</h6></div>' +
+                            '<pre class="bg-light p-3 rounded">' + JSON.stringify(data, null, 2) + '</pre>';
+                    } else {
+                        document.getElementById('resultado').innerHTML = 
+                            '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ' + (data.message || data.erro) + '</div>';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('resultado').innerHTML = 
+                        '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> Erro na consulta: ' + error + '</div>';
+                });
             }
             
             function consultarDDD() {
-                const ddd = prompt("Digite o DDD (ex: 11, 21, 85):");
-                if (ddd) {
-                    mostrarCarregando();
-                    fetch('/api/consultar/ddd', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ddd: ddd })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            document.getElementById('resultado').innerHTML = 
-                                '<div class="alert alert-success"><h6><i class="fas fa-check-circle"></i> DDD Encontrado!</h6></div>' +
-                                '<pre class="bg-light p-3 rounded">' + JSON.stringify(data, null, 2) + '</pre>';
-                        } else {
-                            document.getElementById('resultado').innerHTML = 
-                                '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ' + (data.message || data.erro) + '</div>';
-                        }
-                    })
-                    .catch(error => {
-                        document.getElementById('resultado').innerHTML = 
-                            '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> Erro na consulta: ' + error + '</div>';
-                    });
+                const ddd = document.getElementById('dddInput').value;
+                if (!ddd) {
+                    alert('Por favor, digite um DDD válido');
+                    return;
                 }
+                mostrarCarregando();
+                fetch('/api/consultar/ddd', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ddd: ddd })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        document.getElementById('resultado').innerHTML = 
+                            '<div class="alert alert-success"><h6><i class="fas fa-check-circle"></i> DDD Encontrado!</h6></div>' +
+                            '<pre class="bg-light p-3 rounded">' + JSON.stringify(data, null, 2) + '</pre>';
+                    } else {
+                        document.getElementById('resultado').innerHTML = 
+                            '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ' + (data.message || data.erro) + '</div>';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('resultado').innerHTML = 
+                        '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> Erro na consulta: ' + error + '</div>';
+                });
             }
             
             function consultarCNPJ() {
-                const cnpj = prompt("Digite o CNPJ (ex: 11.222.333/0001-81):");
-                if (cnpj) {
-                    mostrarCarregando();
-                    fetch('/api/consultar/cnpj', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ cnpj: cnpj })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            document.getElementById('resultado').innerHTML = 
-                                '<div class="alert alert-success"><h6><i class="fas fa-check-circle"></i> CNPJ Encontrado!</h6></div>' +
-                                '<pre class="bg-light p-3 rounded">' + JSON.stringify(data, null, 2) + '</pre>';
-                        } else {
-                            document.getElementById('resultado').innerHTML = 
-                                '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ' + (data.message || data.erro) + '</div>';
-                        }
-                    })
-                    .catch(error => {
-                        document.getElementById('resultado').innerHTML = 
-                            '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> Erro na consulta: ' + error + '</div>';
-                    });
+                const cnpj = document.getElementById('cnpjInput').value;
+                if (!cnpj) {
+                    alert('Por favor, digite um CNPJ válido');
+                    return;
                 }
+                mostrarCarregando();
+                fetch('/api/consultar/cnpj', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cnpj: cnpj })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        document.getElementById('resultado').innerHTML = 
+                            '<div class="alert alert-success"><h6><i class="fas fa-check-circle"></i> CNPJ Encontrado!</h6></div>' +
+                            '<pre class="bg-light p-3 rounded">' + JSON.stringify(data, null, 2) + '</pre>';
+                    } else {
+                        document.getElementById('resultado').innerHTML = 
+                            '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ' + (data.message || data.erro) + '</div>';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('resultado').innerHTML = 
+                        '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> Erro na consulta: ' + error + '</div>';
+                });
             }
         </script>
     </body>
