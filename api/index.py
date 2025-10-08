@@ -390,9 +390,5 @@ def api_catch_all(path):
         "help": "Use os endpoints disponíveis para consultas OSINT"
     })
 
-# Para Vercel
-def handler(request):
-    return app(request.environ, lambda status, headers: None)
-
 if __name__ == '__main__':
     app.run(debug=True)
