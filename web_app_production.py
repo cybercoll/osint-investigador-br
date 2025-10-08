@@ -200,6 +200,14 @@ def internal_error(error):
     logger.error(f"Erro interno: {str(error)}")
     return jsonify({'erro': 'Erro interno do servidor'}), 500
 
+# Handler para Vercel (serverless function)
+def handler(request):
+    """Handler principal para Vercel"""
+    return app(request.environ, request.start_response)
+
+# Exporta a aplicação para Vercel
+application = app
+
 if __name__ == '__main__':
     # Configuração para desenvolvimento local
     port = int(os.environ.get('PORT', 5000))
