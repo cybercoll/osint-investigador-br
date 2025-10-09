@@ -1508,6 +1508,33 @@ def api_directd_status():
             'timestamp': datetime.now().isoformat()
         }), 500
 
+@app.route('/api/debug/env', methods=['GET'])
+def api_debug_env():
+    """Debug das variáveis de ambiente"""
+    try:
+        env_vars = {
+            'DIRECT_DATA_TOKEN': 'Configurado' if os.getenv('DIRECT_DATA_TOKEN') else 'Não configurado',
+            'DIRECTD_TOKEN': 'Configurado' if os.getenv('DIRECTD_TOKEN') else 'Não configurado',
+            'ASSERTIVA_LOCALIZE_TOKEN': 'Configurado' if os.getenv('ASSERTIVA_LOCALIZE_TOKEN') else 'Não configurado',
+            'DESK_DATA_TOKEN': 'Configurado' if os.getenv('DESK_DATA_TOKEN') else 'Não configurado',
+            'ANTIFRAUDEBRASIL_TOKEN': 'Configurado' if os.getenv('ANTIFRAUDEBRASIL_TOKEN') else 'Não configurado',
+            'API_NINJAS_KEY': 'Configurado' if os.getenv('API_NINJAS_KEY') else 'Não configurado',
+            'INFOSIMPLES_TOKEN': 'Configurado' if os.getenv('INFOSIMPLES_TOKEN') else 'Não configurado'
+        }
+        
+        return jsonify({
+            'success': True,
+            'environment_variables': env_vars,
+            'timestamp': datetime.now().isoformat()
+        })
+    
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao verificar variáveis de ambiente: {str(e)}',
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
 @app.route('/api/export', methods=['POST'])
 def export_data():
     """Endpoint para exportar dados em JSON ou CSV"""
