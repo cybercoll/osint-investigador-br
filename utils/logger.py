@@ -31,16 +31,22 @@ def setup_logger(name: str = "osint_investigador") -> logging.Logger:
         datefmt='%Y-%m-%d %H:%M:%S'
     )
     
-    # Handler para arquivo
-    if not os.path.exists('logs'):
-        os.makedirs('logs')
-    
-    file_handler = logging.FileHandler(
-        os.path.join('logs', LOG_FILE),
-        encoding='utf-8'
-    )
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
+    # Handler para arquivo (apenas em ambiente local)
+    try:
+        # Verifica se está no Vercel (ambiente serverless)
+        if not os.environ.get('VERCEL'):
+            if not os.path.exists('logs'):
+                os.makedirs('logs')
+            
+            file_handler = logging.FileHandler(
+                os.path.join('logs', LOG_FILE),
+                encoding='utf-8'
+            )
+            file_handler.setFormatter(formatter)
+            logger.addHandler(file_handler)
+    except (OSError, PermissionError):
+        # Em ambiente serverless, não é possível criar arquivos de log
+        pass
     
     # Handler para console
     console_handler = logging.StreamHandler()
