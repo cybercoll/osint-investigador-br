@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
 import requests
 import json
 import re
@@ -335,6 +336,15 @@ def identificar_operadora_por_prefixo(telefone_limpo):
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 app.config['JSON_AS_ASCII'] = False
+
+# Configurar CORS para permitir requisições do frontend
+CORS(app, resources={
+    r"/api/*": {
+        "origins": ["*"],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
 
 # Configuração do banco de dados para ambiente serverless
 def get_db_path():

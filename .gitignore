@@ -163,3 +163,4 @@ secrets.json
 *.sqlite
 *.sqlite3
 osint_database.db
+.vercel
