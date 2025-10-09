@@ -798,38 +798,6 @@ def api_consultar_cpf_completo():
             import traceback
             print(f"[DEBUG] Traceback: {traceback.format_exc()}")
             # Continuar com outras APIs se Direct Data falhar
-                
-                # Endereços
-                addresses = retorno.get('addresses', [])
-                if addresses:
-                    enderecos_formatados = []
-                    for addr in addresses:
-                        endereco = {}
-                        if addr.get('street'):
-                            endereco['endereco'] = f"{addr.get('street', '')}, {addr.get('number', '')}"
-                        if addr.get('neighborhood'):
-                            endereco['bairro'] = addr.get('neighborhood')
-                        if addr.get('city'):
-                            endereco['cidade'] = addr.get('city')
-                        if addr.get('state'):
-                            endereco['estado'] = addr.get('state')
-                        if addr.get('postalCode'):
-                            endereco['cep'] = addr.get('postalCode')
-                        if endereco:
-                            enderecos_formatados.append(endereco)
-                    
-                    if enderecos_formatados:
-                        dados_formatados['enderecos'] = enderecos_formatados
-                
-                # Informações adicionais
-                if retorno.get('salaryRange'):
-                    dados_formatados['faixa_salarial'] = retorno.get('salaryRange')
-                
-                if retorno.get('estimatedSalary'):
-                    dados_formatados['salario_estimado'] = retorno.get('estimatedSalary')
-                        
-        except Exception as api_error:
-            print(f"Erro na Direct Data API: {api_error}")
         
         # 2. Tentar API Brasil para complementar dados faltantes
         if not dados_formatados.get('nome') or len(dados_formatados.keys()) < 5:
