@@ -711,14 +711,18 @@ def api_consultar_cruzamento():
 def api_consultar_cpf_completo():
     """Endpoint para busca completa por CPF com todos os dados"""
     try:
+        print(f"[DEBUG] Iniciando consulta CPF completo - {datetime.now().isoformat()}")
+        
         # Configurar charset se não estiver presente
         if not hasattr(request, 'charset') or not request.charset:
             request.charset = 'utf-8'
         
         # Forçar decodificação JSON
         data = request.get_json(force=True)
+        print(f"[DEBUG] Dados recebidos: {data}")
         
         if not data:
+            print("[DEBUG] Erro: Dados JSON não fornecidos")
             return jsonify({
                 "status": "error",
                 "erro": "Dados JSON não fornecidos",
@@ -727,6 +731,7 @@ def api_consultar_cpf_completo():
         
         cpf = data.get('cpf')
         if not cpf:
+            print("[DEBUG] Erro: CPF não fornecido")
             return jsonify({
                 "status": "error",
                 "erro": "CPF é obrigatório",
@@ -735,6 +740,7 @@ def api_consultar_cpf_completo():
 
         # Limpar CPF (remover formatação)
         cpf_limpo = re.sub(r'\D', '', cpf)
+        print(f"[DEBUG] CPF limpo: {cpf_limpo}")
 
         # Buscar via Direct Data API (dados reais) e complementar com outras APIs
         dados_formatados = {"cpf": cpf_limpo}
@@ -742,14 +748,19 @@ def api_consultar_cpf_completo():
         
         # 1. Tentar Direct Data API primeiro (dados mais completos)
         try:
+            print("[DEBUG] Tentando importar directd_integration")
             sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             from directd_integration import consultar_dados_pessoais_cpf
             
+            print("[DEBUG] Chamando consultar_dados_pessoais_cpf")
             resultado_api = consultar_dados_pessoais_cpf(cpf_limpo)
+            print(f"[DEBUG] Resultado da API Direct Data: {resultado_api}")
             
             if resultado_api.get('success') and resultado_api.get('data'):
+                print("[DEBUG] API Direct Data retornou dados com sucesso")
                 # A Direct Data API retorna os dados diretamente em 'data'
                 retorno = resultado_api.get('data', {})
+                print(f"[DEBUG] Dados extraídos: {retorno}")
                 
                 # Extrair dados da Direct Data API
                 if retorno.get('name'):
@@ -777,6 +788,16 @@ def api_consultar_cpf_completo():
                 emails = retorno.get('emails', [])
                 if emails and any(email.get('emailAddress') for email in emails):
                     dados_formatados['emails'] = [email.get('emailAddress') for email in emails if email.get('emailAddress')]
+                
+                print(f"[DEBUG] Dados formatados após Direct Data: {dados_formatados}")
+            else:
+                print(f"[DEBUG] API Direct Data não retornou dados válidos: success={resultado_api.get('success')}, data={resultado_api.get('data')}")
+        
+        except Exception as e:
+            print(f"[DEBUG] Erro ao consultar Direct Data API: {str(e)}")
+            import traceback
+            print(f"[DEBUG] Traceback: {traceback.format_exc()}")
+            # Continuar com outras APIs se Direct Data falhar
                 
                 # Endereços
                 addresses = retorno.get('addresses', [])
