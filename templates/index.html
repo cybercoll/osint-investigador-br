@@ -268,8 +268,6 @@
             display: inline-block;
         }
     </style>
-            padding: 20px;
-        }
         
 </head>
 <body>
@@ -539,6 +537,41 @@
                                             <button type="submit" class="btn btn-danger">
                                                 <i class="fas fa-search"></i> Consultar Dados Completos
                                             </button>
+                                            
+                                            <!-- Botões para consultas individuais -->
+                                            <div class="mt-3">
+                                                <h6><i class="fas fa-file-alt"></i> Consultas Individuais de Documentos</h6>
+                                                <div class="row g-2">
+                                                    <div class="col-md-6">
+                                                        <button type="button" class="btn btn-outline-primary btn-sm w-100" onclick="consultarTituloEleitor()">
+                                                            <i class="fas fa-vote-yea"></i> Consultar Título
+                                                        </button>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <button type="button" class="btn btn-outline-success btn-sm w-100" onclick="consultarCNS()">
+                                                            <i class="fas fa-id-card"></i> Consultar CNS
+                                                        </button>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <button type="button" class="btn btn-outline-info btn-sm w-100" onclick="consultarPIS()">
+                                                            <i class="fas fa-id-badge"></i> Consultar PIS
+                                                        </button>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <button type="button" class="btn btn-outline-warning btn-sm w-100" onclick="consultarRG()">
+                                                            <i class="fas fa-id-card"></i> Consultar RG
+                                                        </button>
+                                                    </div>
+                                                    <div class="col-md-12">
+                                                        <button type="button" class="btn btn-outline-secondary btn-sm w-100" onclick="consultarCNH()">
+                                                            <i class="fas fa-car"></i> Consultar CNH
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="form-text mt-2">
+                                                    <small><i class="fas fa-info-circle"></i> Clique nos botões acima para consultar documentos individualmente</small>
+                                                </div>
+                                            </div>
                                         </form>
                                     </div>
                                 </div>
@@ -689,7 +722,26 @@
                                         <button class="btn btn-warning mb-2" onclick="limparCache()">
                                             <i class="fas fa-trash"></i> Limpar Cache
                                         </button>
+                                        <button class="btn btn-info mb-2" onclick="carregarHistoricoCache()">
+                                            <i class="fas fa-history"></i> Ver Histórico
+                                        </button>
                                         <div id="cacheActions"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Seção de Histórico de Cache -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <i class="fas fa-history text-info"></i> Histórico de Limpezas de Cache
+                                        </h5>
+                                        <div id="cacheHistory">
+                                            <p class="text-muted">Clique em "Ver Histórico" para carregar os dados.</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

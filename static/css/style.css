@@ -83,6 +83,18 @@ body {
     margin-top: 1rem;
 }
 
+.warning-card {
+    background-color: white;
+    border-left: 4px solid var(--warning-color);
+    margin-top: 1rem;
+}
+
+.success-card {
+    background-color: white;
+    border-left: 4px solid var(--success-color);
+    margin-top: 1rem;
+}
+
 .stats-card {
     background: linear-gradient(135deg, var(--primary-color), var(--info-color));
     color: white;
@@ -313,4 +325,136 @@ body {
 
 .result-value {
     color: var(--secondary-color);
+}
+
+/* Estilos para menus interativos das tabelas */
+.table-menu {
+    position: relative;
+    display: inline-block;
+}
+
+.table-menu-btn {
+    background: none;
+    border: none;
+    color: #6c757d;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.table-menu-btn:hover {
+    background-color: #f8f9fa;
+    color: #495057;
+}
+
+.table-menu-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    min-width: 180px;
+    display: none;
+    animation: fadeInDown 0.2s ease;
+}
+
+.table-menu-dropdown.show {
+    display: block;
+}
+
+.table-menu-item {
+    display: block;
+    width: 100%;
+    padding: 8px 16px;
+    border: none;
+    background: none;
+    text-align: left;
+    color: #495057;
+    text-decoration: none;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.table-menu-item:hover {
+    background-color: #f8f9fa;
+    color: #495057;
+    text-decoration: none;
+}
+
+.table-menu-item i {
+    margin-right: 8px;
+    width: 16px;
+    text-align: center;
+}
+
+.table-menu-divider {
+    height: 1px;
+    background-color: #dee2e6;
+    margin: 4px 0;
+}
+
+/* Animação para o dropdown */
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsividade para tabelas com menus */
+@media (max-width: 768px) {
+    .table-menu-dropdown {
+        right: auto;
+        left: 0;
+        min-width: 160px;
+    }
+}
+
+/* Estilo para linhas da tabela com hover */
+.table tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Estilo para células de ação */
+.table-actions {
+    width: 60px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Tooltip personalizado para ações */
+.table-tooltip {
+    position: relative;
+}
+
+.table-tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 1001;
+}
+
+.table-tooltip:hover::after {
+    opacity: 1;
 }

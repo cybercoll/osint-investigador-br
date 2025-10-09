@@ -150,7 +150,7 @@ if (telefoneForm) {
             setTimeout(() => {
                 hideLoading('telefoneLoading');
                 
-                if (data.success && data.data && data.data.sucesso) {
+                if (data.status === 'success' && data.data) {
                     const telefoneData = data.data;
                     
                     // Determinar qual operadora mostrar
@@ -218,7 +218,7 @@ if (telefoneForm) {
                     showResult('telefoneResult', `
                         <div class="result-card error-card">
                             <h5><i class="fas fa-exclamation-triangle text-danger"></i> Erro</h5>
-                            <p>${data.error || 'Erro ao consultar telefone'}</p>
+                            <p>${data.erro || data.message || 'Erro ao consultar telefone'}</p>
                         </div>
                     `);
                 }
@@ -232,6 +232,644 @@ if (telefoneForm) {
                 </div>
             `);
         }
+    });
+}
+
+// Funções para consulta de documentos individuais
+async function consultarTituloEleitor() {
+    const titulo = document.getElementById('dadosPessoaisTituloEleitorInput').value.trim();
+    const nome = document.getElementById('dadosPessoaisNomeInput').value.trim();
+    
+    if (!titulo) {
+        alert('Por favor, informe o número do título de eleitor.');
+        return;
+    }
+    
+    showLoading('dadosPessoaisLoading');
+    
+    try {
+        const response = await fetch('/api/documentos/titulo-eleitor', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                titulo: titulo,
+                nome: nome
+            })
+        });
+        
+        const data = await response.json();
+        
+        setTimeout(() => {
+            hideLoading('dadosPessoaisLoading');
+            
+            if (data.success && data.data) {
+                showResult('dadosPessoaisResult', `
+                    <div class="result-card success-card">
+                        <h5><i class="fas fa-vote-yea text-success"></i> Título de Eleitor</h5>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <strong>Título:</strong> ${data.data.titulo_eleitor || 'N/A'}
+                            </div>
+                            <div class="info-item">
+                                <strong>Status:</strong> ${data.data.status || 'N/A'}
+                            </div>
+                            <div class="info-item">
+                                <strong>Formato:</strong> ${data.data.formato_valido ? 'Válido' : 'Inválido'}
+                            </div>
+                            <div class="info-item">
+                                <strong>Observação:</strong> ${data.data.observacao || 'N/A'}
+                            </div>
+                        </div>
+                        <div class="metadata">
+                            <small><strong>Fonte:</strong> ${data.metadata.fonte || 'N/A'}</small><br>
+                            <small><strong>Timestamp:</strong> ${data.metadata.timestamp || 'N/A'}</small>
+                        </div>
+                    </div>
+                `);
+            } else {
+                showResult('dadosPessoaisResult', `
+                    <div class="result-card error-card">
+                        <h5><i class="fas fa-exclamation-triangle text-danger"></i> Erro</h5>
+                        <p>${data.error || 'Erro ao consultar título de eleitor'}</p>
+                    </div>
+                `);
+            }
+        }, LOADING_DELAY);
+    } catch (error) {
+        hideLoading('dadosPessoaisLoading');
+        showResult('dadosPessoaisResult', `
+            <div class="result-card error-card">
+                <h5><i class="fas fa-exclamation-triangle text-danger"></i> Erro</h5>
+                <p>Erro ao consultar título de eleitor: ${error.message}</p>
+            </div>
+        `);
+    }
+}
+
+async function consultarCNS() {
+    const cns = document.getElementById('dadosPessoaisCnsInput').value.trim();
+    const nome = document.getElementById('dadosPessoaisNomeInput').value.trim();
+    
+    if (!cns) {
+        alert('Por favor, informe o número do CNS.');
+        return;
+    }
+    
+    showLoading('dadosPessoaisLoading');
+    
+    try {
+        const response = await fetch('/api/documentos/cns', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                cns: cns,
+                nome: nome
+            })
+        });
+        
+        const data = await response.json();
+        
+        setTimeout(() => {
+            hideLoading('dadosPessoaisLoading');
+            
+            if (data.success && data.data) {
+                showResult('dadosPessoaisResult', `
+                    <div class="result-card success-card">
+                        <h5><i class="fas fa-id-card text-success"></i> CNS - Cartão Nacional de Saúde</h5>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <strong>CNS:</strong> ${data.data.cns || 'N/A'}
+                            </div>
+                            <div class="info-item">
+                                <strong>Status:</strong> ${data.data.status || 'N/A'}
+                            </div>
+                            <div class="info-item">
+                                <strong>Formato:</strong> ${data.data.formato_valido ? 'Válido' : 'Inválido'}
+                            </div>
+                            <div class="info-item">
+                                <strong>Observação:</strong> ${data.data.observacao || 'N/A'}
+                            </div>
+                        </div>
+                        <div class="metadata">
+                            <small><strong>Fonte:</strong> ${data.metadata.fonte || 'N/A'}</small><br>
+                            <small><strong>Timestamp:</strong> ${data.metadata.timestamp || 'N/A'}</small>
+                        </div>
+                    </div>
+                `);
+            } else {
+                showResult('dadosPessoaisResult', `
+                    <div class="result-card error-card">
+                        <h5><i class="fas fa-exclamation-triangle text-danger"></i> Erro</h5>
+                        <p>${data.error || 'Erro ao consultar CNS'}</p>
+                    </div>
+                `);
+            }
+        }, LOADING_DELAY);
+    } catch (error) {
+        hideLoading('dadosPessoaisLoading');
+        showResult('dadosPessoaisResult', `
+            <div class="result-card error-card">
+                <h5><i class="fas fa-exclamation-triangle text-danger"></i> Erro</h5>
+                <p>Erro ao consultar CNS: ${error.message}</p>
+            </div>
+        `);
+    }
+}
+
+async function consultarPIS() {
+    const pis = document.getElementById('dadosPessoaisPisInput').value.trim();
+    const nome = document.getElementById('dadosPessoaisNomeInput').value.trim();
+    
+    if (!pis) {
+        alert('Por favor, informe o número do PIS.');
+        return;
+    }
+    
+    showLoading('dadosPessoaisLoading');
+    
+    try {
+        const response = await fetch('/api/documentos/pis', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                pis: pis,
+                nome: nome
+            })
+        });
+        
+        const data = await response.json();
+        
+        setTimeout(() => {
+            hideLoading('dadosPessoaisLoading');
+            
+            if (data.success && data.data) {
+                showResult('dadosPessoaisResult', `
+                    <div class="result-card success-card">
+                        <h5><i class="fas fa-id-badge text-success"></i> PIS/PASEP</h5>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <strong>PIS:</strong> ${data.data.pis || 'N/A'}
+                            </div>
+                            <div class="info-item">
+                                <strong>Status:</strong> ${data.data.status || 'N/A'}
+                            </div>
+                            <div class="info-item">
+                                <strong>Formato:</strong> ${data.data.formato_valido ? 'Válido' : 'Inválido'}
+                            </div>
+                            <div class="info-item">
+                                <strong>Observação:</strong> ${data.data.observacao || 'N/A'}
+                            </div>
+                        </div>
+                        <div class="metadata">
+                            <small><strong>Fonte:</strong> ${data.metadata.fonte || 'N/A'}</small><br>
+                            <small><strong>Timestamp:</strong> ${data.metadata.timestamp || 'N/A'}</small>
+                        </div>
+                    </div>
+                `);
+            } else {
+                showResult('dadosPessoaisResult', `
+                    <div class="result-card error-card">
+                        <h5><i class="fas fa-exclamation-triangle text-danger"></i> Erro</h5>
+                        <p>${data.error || 'Erro ao consultar PIS'}</p>
+                    </div>
+                `);
+            }
+        }, LOADING_DELAY);
+    } catch (error) {
+        hideLoading('dadosPessoaisLoading');
+        showResult('dadosPessoaisResult', `
+            <div class="result-card error-card">
+                <h5><i class="fas fa-exclamation-triangle text-danger"></i> Erro</h5>
+                <p>Erro ao consultar PIS: ${error.message}</p>
+            </div>
+        `);
+    }
+}
+
+async function consultarRG() {
+    const rg = document.getElementById('dadosPessoaisRgInput').value.trim();
+    
+    showLoading('dadosPessoaisLoading');
+    
+    try {
+        const response = await fetch('/api/documentos/rg', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                rg: rg,
+                estado: 'SP' // Padrão
+            })
+        });
+        
+        const data = await response.json();
+        
+        setTimeout(() => {
+            hideLoading('dadosPessoaisLoading');
+            
+            if (data.success && data.data) {
+                showResult('dadosPessoaisResult', `
+                    <div class="result-card warning-card">
+                        <h5><i class="fas fa-id-card text-warning"></i> RG - Registro Geral</h5>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <strong>RG:</strong> ${data.data.rg || 'N/A'}
+                            </div>
+                            <div class="info-item">
+                                <strong>Estado:</strong> ${data.data.estado || 'N/A'}
+                            </div>
+                            <div class="info-item">
+                                <strong>Status:</strong> ${data.data.status || 'N/A'}
+                            </div>
+                            <div class="info-item">
+                                <strong>Observação:</strong> ${data.data.observacao || 'N/A'}
+                            </div>
+                        </div>
+                        <div class="metadata">
+                            <small><strong>Fonte:</strong> ${data.metadata.fonte || 'N/A'}</small><br>
+                            <small><strong>Timestamp:</strong> ${data.metadata.timestamp || 'N/A'}</small>
+                        </div>
+                    </div>
+                `);
+            } else {
+                showResult('dadosPessoaisResult', `
+                    <div class="result-card error-card">
+                        <h5><i class="fas fa-exclamation-triangle text-danger"></i> Erro</h5>
+                        <p>${data.error || 'Erro ao consultar RG'}</p>
+                    </div>
+                `);
+            }
+        }, LOADING_DELAY);
+    } catch (error) {
+        hideLoading('dadosPessoaisLoading');
+        showResult('dadosPessoaisResult', `
+            <div class="result-card error-card">
+                <h5><i class="fas fa-exclamation-triangle text-danger"></i> Erro</h5>
+                <p>Erro ao consultar RG: ${error.message}</p>
+            </div>
+        `);
+    }
+}
+
+async function consultarCNH() {
+    const cnh = document.getElementById('dadosPessoaisCnhInput').value.trim();
+    
+    showLoading('dadosPessoaisLoading');
+    
+    try {
+        const response = await fetch('/api/documentos/cnh', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                cnh: cnh
+            })
+        });
+        
+        const data = await response.json();
+        
+        setTimeout(() => {
+            hideLoading('dadosPessoaisLoading');
+            
+            if (data.success && data.data) {
+                showResult('dadosPessoaisResult', `
+                    <div class="result-card warning-card">
+                        <h5><i class="fas fa-car text-warning"></i> CNH - Carteira Nacional de Habilitação</h5>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <strong>CNH:</strong> ${data.data.cnh || 'N/A'}
+                            </div>
+                            <div class="info-item">
+                                <strong>Status:</strong> ${data.data.status || 'N/A'}
+                            </div>
+                            <div class="info-item">
+                                <strong>Observação:</strong> ${data.data.observacao || 'N/A'}
+                            </div>
+                        </div>
+                        <div class="metadata">
+                            <small><strong>Fonte:</strong> ${data.metadata.fonte || 'N/A'}</small><br>
+                            <small><strong>Timestamp:</strong> ${data.metadata.timestamp || 'N/A'}</small>
+                        </div>
+                    </div>
+                `);
+            } else {
+                showResult('dadosPessoaisResult', `
+                    <div class="result-card error-card">
+                        <h5><i class="fas fa-exclamation-triangle text-danger"></i> Erro</h5>
+                        <p>${data.error || 'Erro ao consultar CNH'}</p>
+                    </div>
+                `);
+            }
+        }, LOADING_DELAY);
+    } catch (error) {
+        hideLoading('dadosPessoaisLoading');
+        showResult('dadosPessoaisResult', `
+            <div class="result-card error-card">
+                <h5><i class="fas fa-exclamation-triangle text-danger"></i> Erro</h5>
+                <p>Erro ao consultar CNH: ${error.message}</p>
+            </div>
+        `);
+    }
+}
+
+// Funções para menus interativos das tabelas
+function createTableMenu(rowData, rowType) {
+    const menuId = `menu-${Math.random().toString(36).substr(2, 9)}`;
+    
+    let menuItems = '';
+    
+    // Itens comuns para todos os tipos
+    menuItems += `
+        <button class="table-menu-item" onclick="copyToClipboard('${JSON.stringify(rowData).replace(/'/g, "\\'")}')">
+            <i class="fas fa-copy"></i> Copiar Dados
+        </button>
+        <button class="table-menu-item" onclick="exportSingleItem('${rowType}', '${JSON.stringify(rowData).replace(/'/g, "\\'")}')">
+            <i class="fas fa-download"></i> Exportar Item
+        </button>
+        <div class="table-menu-divider"></div>
+    `;
+    
+    // Itens específicos por tipo
+    switch(rowType) {
+        case 'municipio':
+            menuItems += `
+                <button class="table-menu-item" onclick="searchRelatedData('municipio', '${rowData.codigo_ibge}')">
+                    <i class="fas fa-search"></i> Buscar Dados Relacionados
+                </button>
+                <button class="table-menu-item" onclick="viewOnMap('${rowData.nome}')">
+                    <i class="fas fa-map-marker-alt"></i> Ver no Mapa
+                </button>
+            `;
+            break;
+        case 'banco':
+            menuItems += `
+                <button class="table-menu-item" onclick="searchBankDetails('${rowData.code}')">
+                    <i class="fas fa-info-circle"></i> Detalhes do Banco
+                </button>
+                <button class="table-menu-item" onclick="searchBankAgencies('${rowData.code}')">
+                    <i class="fas fa-building"></i> Buscar Agências
+                </button>
+            `;
+            break;
+        case 'cache':
+            menuItems += `
+                <button class="table-menu-item" onclick="viewCacheDetails('${rowData.data_execucao}')">
+                    <i class="fas fa-eye"></i> Ver Detalhes
+                </button>
+                <button class="table-menu-item" onclick="deleteCacheEntry('${rowData.data_execucao}')">
+                    <i class="fas fa-trash text-danger"></i> Remover Entrada
+                </button>
+            `;
+            break;
+        case 'pessoa':
+            menuItems += `
+                <button class="table-menu-item" onclick="viewPersonDetails('${rowData.cpf || rowData.nome}')">
+                    <i class="fas fa-user"></i> Ver Perfil Completo
+                </button>
+                <button class="table-menu-item" onclick="searchRelatedPersons('${rowData.cpf || rowData.nome}')">
+                    <i class="fas fa-users"></i> Buscar Relacionados
+                </button>
+                <button class="table-menu-item" onclick="addToFavorites('${JSON.stringify(rowData).replace(/'/g, "\\'")}')">
+                    <i class="fas fa-star"></i> Adicionar aos Favoritos
+                </button>
+            `;
+            break;
+        default:
+            menuItems += `
+                <button class="table-menu-item" onclick="viewItemDetails('${JSON.stringify(rowData).replace(/'/g, "\\'")}')">
+                    <i class="fas fa-eye"></i> Ver Detalhes
+                </button>
+            `;
+    }
+    
+    return `
+        <div class="table-menu">
+            <button class="table-menu-btn table-tooltip" data-tooltip="Ações" onclick="toggleTableMenu('${menuId}')">
+                <i class="fas fa-ellipsis-v"></i>
+            </button>
+            <div class="table-menu-dropdown" id="${menuId}">
+                ${menuItems}
+            </div>
+        </div>
+    `;
+}
+
+function toggleTableMenu(menuId) {
+    // Fechar todos os outros menus
+    document.querySelectorAll('.table-menu-dropdown').forEach(menu => {
+        if (menu.id !== menuId) {
+            menu.classList.remove('show');
+        }
+    });
+    
+    // Toggle do menu atual
+    const menu = document.getElementById(menuId);
+    if (menu) {
+        menu.classList.toggle('show');
+    }
+}
+
+// Fechar menus quando clicar fora
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('.table-menu')) {
+        document.querySelectorAll('.table-menu-dropdown').forEach(menu => {
+            menu.classList.remove('show');
+        });
+    }
+});
+
+// Funções de ação dos menus
+function copyToClipboard(data) {
+    try {
+        const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+        const text = JSON.stringify(parsedData, null, 2);
+        
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification('Dados copiados para a área de transferência!', 'success');
+            });
+        } else {
+            // Fallback para navegadores mais antigos
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showNotification('Dados copiados para a área de transferência!', 'success');
+        }
+    } catch (error) {
+        showNotification('Erro ao copiar dados', 'error');
+    }
+}
+
+function exportSingleItem(type, data) {
+    try {
+        const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+        const blob = new Blob([JSON.stringify(parsedData, null, 2)], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `${type}_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        showNotification('Item exportado com sucesso!', 'success');
+    } catch (error) {
+        showNotification('Erro ao exportar item', 'error');
+    }
+}
+
+function searchRelatedData(type, id) {
+    showNotification(`Buscando dados relacionados para ${type}: ${id}`, 'info');
+    // Implementar lógica específica de busca relacionada
+}
+
+function viewOnMap(location) {
+    const url = `https://www.google.com/maps/search/${encodeURIComponent(location)}`;
+    window.open(url, '_blank');
+}
+
+function searchBankDetails(bankCode) {
+    // Implementar busca de detalhes do banco
+    showNotification(`Buscando detalhes do banco: ${bankCode}`, 'info');
+}
+
+function searchBankAgencies(bankCode) {
+    // Implementar busca de agências do banco
+    showNotification(`Buscando agências do banco: ${bankCode}`, 'info');
+}
+
+function viewCacheDetails(timestamp) {
+    // Implementar visualização de detalhes do cache
+    showNotification(`Visualizando detalhes do cache: ${timestamp}`, 'info');
+}
+
+function deleteCacheEntry(timestamp) {
+    if (confirm('Tem certeza que deseja remover esta entrada do cache?')) {
+        // Implementar remoção da entrada do cache
+        showNotification(`Removendo entrada do cache: ${timestamp}`, 'info');
+    }
+}
+
+function viewPersonDetails(identifier) {
+    // Implementar visualização de detalhes da pessoa
+    showNotification(`Visualizando perfil: ${identifier}`, 'info');
+}
+
+function searchRelatedPersons(identifier) {
+    // Implementar busca de pessoas relacionadas
+    showNotification(`Buscando pessoas relacionadas: ${identifier}`, 'info');
+}
+
+function addToFavorites(data) {
+    try {
+        const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+        let favorites = JSON.parse(localStorage.getItem('osint_favorites') || '[]');
+        
+        // Verificar se já existe nos favoritos
+        const exists = favorites.some(fav => 
+            (fav.cpf && fav.cpf === parsedData.cpf) || 
+            (fav.nome && fav.nome === parsedData.nome)
+        );
+        
+        if (!exists) {
+            favorites.push({
+                ...parsedData,
+                added_at: new Date().toISOString()
+            });
+            localStorage.setItem('osint_favorites', JSON.stringify(favorites));
+            showNotification('Adicionado aos favoritos!', 'success');
+        } else {
+            showNotification('Item já está nos favoritos', 'warning');
+        }
+    } catch (error) {
+        showNotification('Erro ao adicionar aos favoritos', 'error');
+    }
+}
+
+function viewItemDetails(data) {
+    try {
+        const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+        
+        // Criar modal para exibir detalhes
+        const modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.innerHTML = `
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Detalhes do Item</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <pre class="bg-light p-3 rounded">${JSON.stringify(parsedData, null, 2)}</pre>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        <button type="button" class="btn btn-primary" onclick="copyToClipboard('${JSON.stringify(parsedData).replace(/'/g, "\\'")}')">
+                            <i class="fas fa-copy"></i> Copiar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+        
+        // Remover modal após fechar
+        modal.addEventListener('hidden.bs.modal', () => {
+            document.body.removeChild(modal);
+        });
+    } catch (error) {
+        showNotification('Erro ao exibir detalhes', 'error');
+    }
+}
+
+function showNotification(message, type = 'info') {
+    // Criar notificação toast
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : 'info'} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-circle' : 'info-circle'}"></i>
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    // Adicionar container de toasts se não existir
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        toastContainer.style.zIndex = '1055';
+        document.body.appendChild(toastContainer);
+    }
+    
+    toastContainer.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+    bsToast.show();
+    
+    // Remover toast após ocultar
+    toast.addEventListener('hidden.bs.toast', () => {
+        toastContainer.removeChild(toast);
     });
 }
 
@@ -259,7 +897,7 @@ if (dadosCpfForm) {
         showLoading('dadosPessoaisLoading');
         
         try {
-            const response = await fetch(`/api/directd/consultar-cpf`, {
+            const response = await fetch(`/api/consultar/cpf-completo`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -271,109 +909,80 @@ if (dadosCpfForm) {
             setTimeout(() => {
                 hideLoading('dadosPessoaisLoading');
                 
-                if (data.success && data.data && data.data.retorno) {
-                    const pessoaData = data.data.retorno;
-                    const metaDados = data.data.metaDados;
+                if (data.status === 'success' && data.dados) {
+                    const pessoaData = data.dados;
                     
                     showResult('dadosPessoaisResult', `
                         <div class="result-card success-card">
                             <h5><i class="fas fa-user-check text-success"></i> Dados Pessoais Encontrados</h5>
                             <div class="info-grid">
                                 <div class="info-item">
-                                    <strong>Nome:</strong> ${pessoaData.name || 'N/A'}
+                                    <strong>Nome:</strong> ${pessoaData.nome || 'N/A'}
                                 </div>
                                 <div class="info-item">
                                     <strong>CPF:</strong> ${pessoaData.cpf || 'N/A'}
                                 </div>
+                                ${pessoaData.idade ? `<div class="info-item">
+                                    <strong>Idade:</strong> ${pessoaData.idade} anos
+                                </div>` : ''}
+                                ${pessoaData.sexo ? `<div class="info-item">
+                                    <strong>Sexo:</strong> ${pessoaData.sexo}
+                                </div>` : ''}
+                                ${pessoaData.mae ? `<div class="info-item">
+                                    <strong>Nome da Mãe:</strong> ${pessoaData.mae}
+                                </div>` : ''}
+                                ${pessoaData.data_nascimento ? `<div class="info-item">
+                                    <strong>Data de Nascimento:</strong> ${pessoaData.data_nascimento}
+                                </div>` : ''}
+                                ${pessoaData.telefones && pessoaData.telefones.length > 0 ? `<div class="info-item">
+                                    <strong>Telefones:</strong> ${pessoaData.telefones.join(', ')}
+                                </div>` : ''}
+                                ${pessoaData.emails && pessoaData.emails.length > 0 ? `<div class="info-item">
+                                    <strong>Emails:</strong> ${pessoaData.emails.join(', ')}
+                                </div>` : ''}
+                                ${pessoaData.enderecos && pessoaData.enderecos.length > 0 ? `<div class="info-item">
+                                    <strong>Endereços:</strong><br>
+                                    ${pessoaData.enderecos.map(endereco => 
+                                        `${endereco.endereco}, ${endereco.bairro}, ${endereco.cidade}/${endereco.estado} - CEP: ${endereco.cep}`
+                                    ).join('<br>')}
+                                </div>` : ''}
                                 <div class="info-item">
-                                    <strong>Data de Nascimento:</strong> ${pessoaData.dateOfBirth || 'N/A'}
+                                    <strong>RG:</strong> ${pessoaData.rg || 'N/A'}
                                 </div>
                                 <div class="info-item">
-                                    <strong>Idade:</strong> ${pessoaData.age || 'N/A'} anos
+                                    <strong>CNH:</strong> ${pessoaData.cnh || 'N/A'}
                                 </div>
                                 <div class="info-item">
-                                    <strong>Gênero:</strong> ${pessoaData.gender || 'N/A'}
+                                    <strong>Título Eleitor:</strong> ${pessoaData.titulo_eleitor || 'N/A'}
                                 </div>
                                 <div class="info-item">
-                                    <strong>Nome da Mãe:</strong> ${pessoaData.nameMother || 'N/A'}
+                                    <strong>PIS:</strong> ${pessoaData.pis || 'N/A'}
                                 </div>
                                 <div class="info-item">
-                                    <strong>Faixa Salarial:</strong> ${pessoaData.salaryRange || 'N/A'}
+                                    <strong>CNS:</strong> ${pessoaData.cns || 'N/A'}
                                 </div>
                             </div>
                             
-                            ${pessoaData.phones && pessoaData.phones.length > 0 ? `
-                                <div class="mt-3">
-                                    <strong>Telefones:</strong>
-                                    <div class="mt-2">
-                                        ${pessoaData.phones.map(phone => `
-                                            <div class="info-item">
-                                                <span class="badge bg-primary">${phone.phoneNumber}</span>
-                                                <small class="text-muted">(${phone.phoneType})</small>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                </div>
-                            ` : ''}
-                            
-                            ${pessoaData.addresses && pessoaData.addresses.length > 0 ? `
-                                <div class="mt-3">
-                                    <strong>Endereços:</strong>
-                                    <div class="mt-2">
-                                        ${pessoaData.addresses.map(address => `
-                                            <div class="info-item">
-                                                <div>
-                                                    <strong>Endereço:</strong> ${address.street}, ${address.number}
-                                                    ${address.complement ? ` - ${address.complement}` : ''}
-                                                </div>
-                                                <div>
-                                                    <strong>Bairro:</strong> ${address.neighborhood}
-                                                </div>
-                                                <div>
-                                                    <strong>Cidade:</strong> ${address.city} - ${address.state}
-                                                </div>
-                                                <div>
-                                                    <strong>CEP:</strong> ${address.postalCode}
-                                                </div>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                </div>
-                            ` : ''}
-                            
-                            ${pessoaData.emails && pessoaData.emails.length > 0 ? `
-                                <div class="mt-3">
-                                    <strong>E-mails:</strong>
-                                    <div class="mt-2">
-                                        ${pessoaData.emails.map(email => `
-                                            <div class="info-item">
-                                                <span class="badge bg-info">${email.emailAddress}</span>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                </div>
-                            ` : ''}
-                            
                             <div class="mt-3">
-                                <small class="text-muted">
-                                    <strong>Consulta:</strong> ${metaDados.consultaNome} | 
-                                    <strong>Tempo:</strong> ${metaDados.tempoExecucaoMs}ms | 
-                                    <strong>API:</strong> ${metaDados.apiVersao}
-                                </small>
-                            </div>
-                            
-                            <div class="mt-3">
-                                <button class="btn btn-sm btn-outline-primary" onclick="exportarDados('direct-data-cpf', ${JSON.stringify(data.data).replace(/"/g, '&quot;')})">
+                                <small class="text-muted">Fonte: ${data.fonte || 'API Externa'}</small><br>
+                                <button class="btn btn-sm btn-outline-primary mt-2" onclick="exportarDados('cpf-completo', ${JSON.stringify(data).replace(/"/g, '&quot;')})">
                                     <i class="fas fa-download"></i> Exportar JSON
                                 </button>
                             </div>
                         </div>
                     `);
+                } else if (data.status === 'not_found') {
+                    showResult('dadosPessoaisResult', `
+                        <div class="result-card warning-card">
+                            <h5><i class="fas fa-info-circle text-warning"></i> CPF não encontrado</h5>
+                            <p>${data.message}</p>
+                        </div>
+                    `);
                 } else {
                     showResult('dadosPessoaisResult', `
                         <div class="result-card error-card">
-                            <h5><i class="fas fa-exclamation-triangle text-danger"></i> Nenhum dado encontrado</h5>
-                            <p>${data.erro || data.error || 'Não foram encontrados dados para o CPF informado'}</p>
+                            <h5><i class="fas fa-exclamation-triangle text-danger"></i> Erro</h5>
+                            <p>${data.erro || data.message || 'Erro desconhecido'}</p>
                         </div>
                     `);
                 }
@@ -440,9 +1049,9 @@ if (dadosNomeForm) {
             setTimeout(() => {
                 hideLoading('dadosPessoaisLoading');
                 
-                if (data.success && data.data && data.data.retorno) {
-                    const pessoaData = data.data.retorno;
-                    const metaDados = data.data.metaDados;
+                if (data.success && data.data && data.data.data) {
+                    const pessoaData = data.data.data;
+                    const metaDados = data.data.metadata;
                     
                     showResult('dadosPessoaisResult', `
                         <div class="result-card success-card">
@@ -478,7 +1087,7 @@ if (dadosNomeForm) {
                                         ${pessoaData.phones.map(phone => `
                                             <div class="info-item">
                                                 <span class="badge bg-primary">${phone.phoneNumber}</span>
-                                                <small class="text-muted">(${phone.phoneType})</small>
+                                                ${phone.phoneType ? `<small class="text-muted">(${phone.phoneType})</small>` : ''}
                                             </div>
                                         `).join('')}
                                     </div>
@@ -492,17 +1101,17 @@ if (dadosNomeForm) {
                                         ${pessoaData.addresses.map(address => `
                                             <div class="info-item">
                                                 <div>
-                                                    <strong>Endereço:</strong> ${address.street}, ${address.number}
+                                                    <strong>Endereço:</strong> ${address.street || 'N/A'}, ${address.number || 'N/A'}
                                                     ${address.complement ? ` - ${address.complement}` : ''}
                                                 </div>
                                                 <div>
-                                                    <strong>Bairro:</strong> ${address.neighborhood}
+                                                    <strong>Bairro:</strong> ${address.neighborhood || 'N/A'}
                                                 </div>
                                                 <div>
-                                                    <strong>Cidade:</strong> ${address.city} - ${address.state}
+                                                    <strong>Cidade:</strong> ${address.city || 'N/A'} - ${address.state || 'N/A'}
                                                 </div>
                                                 <div>
-                                                    <strong>CEP:</strong> ${address.postalCode}
+                                                    <strong>CEP:</strong> ${address.postalCode || 'N/A'}
                                                 </div>
                                             </div>
                                         `).join('')}
@@ -525,9 +1134,8 @@ if (dadosNomeForm) {
                             
                             <div class="mt-3">
                                 <small class="text-muted">
-                                    <strong>Consulta:</strong> ${metaDados.consultaNome} | 
-                                    <strong>Tempo:</strong> ${metaDados.tempoExecucaoMs}ms | 
-                                    <strong>API:</strong> ${metaDados.apiVersao}
+                                    <strong>Fonte:</strong> ${data.fonte || 'Direct Data API'} | 
+                                    <strong>Timestamp:</strong> ${data.timestamp}
                                 </small>
                             </div>
                             
@@ -585,9 +1193,9 @@ document.getElementById('cepForm').addEventListener('submit', async function(e) 
         setTimeout(() => {
             hideLoading('cepLoading');
             
-            if (data.success) {
-                const result = data.data;
-                const fonte = result.fonte ? ` (via ${result.fonte})` : '';
+            if (data.status === 'success' && data.dados) {
+                const result = data.dados;
+                const fonte = data.fonte ? ` (via ${data.fonte})` : '';
                 showResult('cepResult', `
                     <div class="result-card">
                         <h5><i class="fas fa-check-circle text-success"></i> Resultado da Consulta${fonte}</h5>
@@ -619,7 +1227,7 @@ document.getElementById('cepForm').addEventListener('submit', async function(e) 
                 showResult('cepResult', `
                     <div class="result-card error-card">
                         <h5><i class="fas fa-exclamation-triangle text-danger"></i> Erro</h5>
-                        <p>${data.error || data.message || 'Erro desconhecido'}</p>
+                        <p>${data.erro || data.message || 'CEP não encontrado'}</p>
                     </div>
                 `);
             }
@@ -728,8 +1336,8 @@ document.getElementById('cnpjForm').addEventListener('submit', async function(e)
         setTimeout(() => {
             hideLoading('cnpjLoading');
             
-            if (data && !data.erro) {
-                const result = data;
+            if (data && data.status === 'success' && data.dados) {
+                const result = data.dados;
                 let resultHtml = `
                     <div class="result-card">
                         <h5><i class="fas fa-check-circle text-success"></i> Resultado da Consulta</h5>
@@ -741,61 +1349,119 @@ document.getElementById('cnpjForm').addEventListener('submit', async function(e)
                         <div class="col-md-6">
                             <p><strong>CNPJ:</strong> ${result.cnpj || 'N/A'}</p>
                             <p><strong>Razão Social:</strong> ${result.razao_social || 'N/A'}</p>
-                            <p><strong>Nome Fantasia:</strong> ${result.nome_fantasia || 'N/A'}</p>
-                            <p><strong>Situação:</strong> ${result.situacao || 'N/A'}</p>
+                            <p><strong>Nome Fantasia:</strong> ${result.nome_fantasia || 'Não informado'}</p>
+                            <p><strong>Situação:</strong> ${result.descricao_situacao_cadastral || 'N/A'}</p>
                         </div>
                         <div class="col-md-6">
-                            <p><strong>Porte:</strong> ${result.porte || 'N/A'}</p>
-                            <p><strong>Natureza Jurídica:</strong> ${result.natureza_juridica || 'N/A'}</p>
-                            <p><strong>Capital Social:</strong> R$ ${result.capital_social || 'N/A'}</p>
-                        </div>
-                    `;
-                } else if (fonte === 'cnpja') {
-                    resultHtml += `
-                        <div class="col-md-6">
-                            <p><strong>CNPJ:</strong> ${result.cnpj || 'N/A'}</p>
-                            <p><strong>Razão Social:</strong> ${result.razao_social || 'N/A'}</p>
-                            <p><strong>Nome Fantasia:</strong> ${result.nome_fantasia || 'N/A'}</p>
-                            <p><strong>Situação:</strong> ${result.situacao || 'N/A'}</p>
-                            <p><strong>Data de Abertura:</strong> ${result.data_abertura || 'N/A'}</p>
-                        </div>
-                        <div class="col-md-6">
+                            <p><strong>Data de Abertura:</strong> ${result.data_inicio_atividade || 'N/A'}</p>
                             <p><strong>Porte:</strong> ${result.porte || 'N/A'}</p>
                             <p><strong>Natureza Jurídica:</strong> ${result.natureza_juridica || 'N/A'}</p>
                             <p><strong>Capital Social:</strong> R$ ${result.capital_social ? Number(result.capital_social).toLocaleString('pt-BR') : 'N/A'}</p>
-                            <p><strong>Fonte:</strong> ${result.fonte || 'N/A'}</p>
                         </div>
                     `;
                     
-                    // Adicionar informações de endereço se disponível
-                    if (result.endereco && Object.keys(result.endereco).length > 0) {
+                    // Adicionar informações de endereço
+                    if (result.logradouro || result.bairro || result.municipio) {
                         resultHtml += `
                             <div class="col-12 mt-3">
                                 <h6><i class="fas fa-map-marker-alt"></i> Endereço</h6>
-                                <p><strong>Logradouro:</strong> ${result.endereco.logradouro || 'N/A'}, ${result.endereco.numero || 'S/N'}</p>
-                                <p><strong>Bairro:</strong> ${result.endereco.bairro || 'N/A'}</p>
-                                <p><strong>Cidade/UF:</strong> ${result.endereco.municipio || 'N/A'}/${result.endereco.uf || 'N/A'}</p>
-                                <p><strong>CEP:</strong> ${result.endereco.cep || 'N/A'}</p>
+                                <p><strong>Logradouro:</strong> ${result.descricao_tipo_de_logradouro || ''} ${result.logradouro || 'N/A'}, ${result.numero || 'S/N'}</p>
+                                ${result.complemento ? `<p><strong>Complemento:</strong> ${result.complemento}</p>` : ''}
+                                <p><strong>Bairro:</strong> ${result.bairro || 'N/A'}</p>
+                                <p><strong>Cidade/UF:</strong> ${result.municipio || 'N/A'}/${result.uf || 'N/A'}</p>
+                                <p><strong>CEP:</strong> ${result.cep || 'N/A'}</p>
                             </div>
                         `;
                     }
                     
                     // Adicionar telefones se disponível
-                    if (result.telefones && result.telefones.length > 0) {
+                    if (result.ddd_telefone_1) {
                         resultHtml += `
                             <div class="col-12 mt-3">
                                 <h6><i class="fas fa-phone"></i> Telefones</h6>
-                                ${result.telefones.map(tel => `<p>(${tel.area}) ${tel.number}</p>`).join('')}
+                                <p><strong>Telefone 1:</strong> ${result.ddd_telefone_1}</p>
+                                ${result.ddd_telefone_2 ? `<p><strong>Telefone 2:</strong> ${result.ddd_telefone_2}</p>` : ''}
                             </div>
                         `;
                     }
                     
                     // Adicionar atividades se disponível
-                    if (result.atividade_principal && result.atividade_principal.length > 0) {
+                    if (result.cnae_fiscal_descricao) {
                         resultHtml += `
                             <div class="col-12 mt-3">
                                 <h6><i class="fas fa-briefcase"></i> Atividade Principal</h6>
-                                <p>${result.atividade_principal[0].text || 'N/A'}</p>
+                                <p><strong>CNAE:</strong> ${result.cnae_fiscal} - ${result.cnae_fiscal_descricao}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    // Adicionar atividades secundárias se disponível
+                    if (result.cnaes_secundarios && result.cnaes_secundarios.length > 0) {
+                        resultHtml += `
+                            <div class="col-12 mt-3">
+                                <h6><i class="fas fa-briefcase"></i> Atividades Secundárias</h6>
+                                ${result.cnaes_secundarios.map(cnae => `<p><strong>CNAE:</strong> ${cnae.codigo} - ${cnae.descricao}</p>`).join('')}
+                            </div>
+                        `;
+                    }
+                } else if (fonte === 'cnpja') {
+                    resultHtml += `
+                        <div class="col-md-6">
+                            <p><strong>CNPJ:</strong> ${result.cnpj || data.cnpj || 'N/A'}</p>
+                            <p><strong>Razão Social:</strong> ${result.razao_social || 'N/A'}</p>
+                            <p><strong>Nome Fantasia:</strong> ${result.nome_fantasia || 'N/A'}</p>
+                            <p><strong>Situação:</strong> ${result.descricao_situacao_cadastral || result.situacao || 'N/A'}</p>
+                            <p><strong>Data de Abertura:</strong> ${result.data_inicio_atividade || result.data_abertura || 'N/A'}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Porte:</strong> ${result.porte || 'N/A'}</p>
+                            <p><strong>Natureza Jurídica:</strong> ${result.natureza_juridica || 'N/A'}</p>
+                            <p><strong>Capital Social:</strong> R$ ${result.capital_social ? Number(result.capital_social).toLocaleString('pt-BR') : 'N/A'}</p>
+                            <p><strong>Fonte:</strong> ${data.fonte || 'N/A'}</p>
+                        </div>
+                    `;
+                    
+                    // Adicionar informações de endereço se disponível
+                    if (result.logradouro || result.bairro || result.municipio) {
+                        resultHtml += `
+                            <div class="col-12 mt-3">
+                                <h6><i class="fas fa-map-marker-alt"></i> Endereço</h6>
+                                <p><strong>Logradouro:</strong> ${result.descricao_tipo_de_logradouro || ''} ${result.logradouro || 'N/A'}, ${result.numero || 'S/N'}</p>
+                                ${result.complemento ? `<p><strong>Complemento:</strong> ${result.complemento}</p>` : ''}
+                                <p><strong>Bairro:</strong> ${result.bairro || 'N/A'}</p>
+                                <p><strong>Cidade/UF:</strong> ${result.municipio || 'N/A'}/${result.uf || 'N/A'}</p>
+                                <p><strong>CEP:</strong> ${result.cep || 'N/A'}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    // Adicionar telefones se disponível
+                    if (result.ddd_telefone_1) {
+                        resultHtml += `
+                            <div class="col-12 mt-3">
+                                <h6><i class="fas fa-phone"></i> Telefones</h6>
+                                <p>${result.ddd_telefone_1}</p>
+                                ${result.ddd_telefone_2 ? `<p>${result.ddd_telefone_2}</p>` : ''}
+                            </div>
+                        `;
+                    }
+                    
+                    // Adicionar atividades se disponível
+                    if (result.cnae_fiscal_descricao) {
+                        resultHtml += `
+                            <div class="col-12 mt-3">
+                                <h6><i class="fas fa-briefcase"></i> Atividade Principal</h6>
+                                <p><strong>CNAE:</strong> ${result.cnae_fiscal} - ${result.cnae_fiscal_descricao}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    // Adicionar atividades secundárias se disponível
+                    if (result.cnaes_secundarios && result.cnaes_secundarios.length > 0) {
+                        resultHtml += `
+                            <div class="col-12 mt-3">
+                                <h6><i class="fas fa-briefcase"></i> Atividades Secundárias</h6>
+                                ${result.cnaes_secundarios.map(cnae => `<p><strong>CNAE:</strong> ${cnae.codigo} - ${cnae.descricao}</p>`).join('')}
                             </div>
                         `;
                     }
@@ -803,15 +1469,15 @@ document.getElementById('cnpjForm').addEventListener('submit', async function(e)
                     // Para outras fontes (receitaws, etc.)
                     resultHtml += `
                         <div class="col-md-6">
-                            <p><strong>CNPJ:</strong> ${result.cnpj || 'N/A'}</p>
+                            <p><strong>CNPJ:</strong> ${result.cnpj || data.cnpj || 'N/A'}</p>
                             <p><strong>Nome:</strong> ${result.nome || result.razao_social || 'N/A'}</p>
                             <p><strong>Fantasia:</strong> ${result.fantasia || result.nome_fantasia || 'N/A'}</p>
-                            <p><strong>Situação:</strong> ${result.situacao || 'N/A'}</p>
+                            <p><strong>Situação:</strong> ${result.descricao_situacao_cadastral || result.situacao || 'N/A'}</p>
                         </div>
                         <div class="col-md-6">
                             <p><strong>Porte:</strong> ${result.porte || 'N/A'}</p>
                             <p><strong>Natureza:</strong> ${result.natureza_juridica || 'N/A'}</p>
-                            <p><strong>Capital:</strong> R$ ${result.capital_social || 'N/A'}</p>
+                            <p><strong>Capital:</strong> R$ ${result.capital_social ? Number(result.capital_social).toLocaleString('pt-BR') : 'N/A'}</p>
                         </div>
                     `;
                 }
@@ -888,6 +1554,7 @@ document.getElementById('municipiosForm').addEventListener('submit', async funct
                                     <tr>
                                         <th>Código IBGE</th>
                                         <th>Nome</th>
+                                        <th class="table-actions">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -895,6 +1562,9 @@ document.getElementById('municipiosForm').addEventListener('submit', async funct
                                         <tr>
                                             <td>${m.codigo_ibge || 'N/A'}</td>
                                             <td>${m.nome || 'N/A'}</td>
+                                            <td class="table-actions">
+                                                ${createTableMenu(m, 'municipio')}
+                                            </td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
@@ -955,6 +1625,7 @@ async function listarBancos() {
                                         <th>Código</th>
                                         <th>Nome</th>
                                         <th>Nome Completo</th>
+                                        <th class="table-actions">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -963,6 +1634,9 @@ async function listarBancos() {
                                             <td><span class="badge bg-primary">${b.code || 'N/A'}</span></td>
                                             <td>${b.name || 'N/A'}</td>
                                             <td>${b.fullName || 'N/A'}</td>
+                                            <td class="table-actions">
+                                                ${createTableMenu(b, 'banco')}
+                                            </td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
@@ -1150,6 +1824,77 @@ async function limparCache() {
         }
     } catch (error) {
         document.getElementById('cacheActions').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i> Erro: ${error.message}
+            </div>
+        `;
+    }
+}
+
+// Carregar histórico de cache
+async function carregarHistoricoCache() {
+    try {
+        showLoading('cacheHistory');
+        
+        const response = await fetch('/api/cache/history');
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            let html = '';
+            
+            if (data.total === 0) {
+                html = '<p class="text-muted">Nenhuma limpeza de cache registrada.</p>';
+            } else {
+                html = `
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Data/Hora</th>
+                                    <th>Ação</th>
+                                    <th>Itens Removidos</th>
+                                    <th>IP do Usuário</th>
+                                    <th>Detalhes</th>
+                                    <th class="table-actions">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                data.historico.forEach(item => {
+                    const dataFormatada = new Date(item.data_execucao).toLocaleString('pt-BR');
+                    html += `
+                        <tr>
+                            <td>${dataFormatada}</td>
+                            <td><span class="badge bg-warning">Limpeza</span></td>
+                            <td>${item.items_removidos}</td>
+                            <td>${item.usuario_ip}</td>
+                            <td>${item.detalhes}</td>
+                            <td class="table-actions">
+                                ${createTableMenu(item, 'cache')}
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-muted mt-2">Total de registros: ${data.total}</p>
+                `;
+            }
+            
+            document.getElementById('cacheHistory').innerHTML = html;
+        } else {
+            document.getElementById('cacheHistory').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> Erro ao carregar histórico: ${data.message}
+                </div>
+            `;
+        }
+    } catch (error) {
+        document.getElementById('cacheHistory').innerHTML = `
             <div class="alert alert-danger">
                 <i class="fas fa-exclamation-triangle"></i> Erro: ${error.message}
             </div>
@@ -1345,41 +2090,49 @@ if (dadosPessoaisForm) {
                     // Exibir resultados da busca cruzada
                     const resultados = data.dados.map(pessoa => `
                         <div class="result-card success-card mb-3">
-                            <h5><i class="fas fa-user text-success"></i> Dados Encontrados</h5>
+                            <h5><i class="fas fa-user-check text-success"></i> Registro Encontrado</h5>
                             <div class="info-grid">
                                 <div class="info-item">
-                                    <strong>Nome:</strong> ${pessoa.nome || 'N/A'}
+                                    <strong><i class="fas fa-user"></i> Nome:</strong> ${pessoa.nome || 'N/A'}
                                 </div>
                                 <div class="info-item">
-                                    <strong>CPF:</strong> ${pessoa.cpf || 'N/A'}
+                                    <strong><i class="fas fa-id-card"></i> CPF:</strong> ${pessoa.cpf || 'N/A'}
                                 </div>
                                 <div class="info-item">
-                                    <strong>RG:</strong> ${pessoa.rg || 'N/A'}
+                                    <strong><i class="fas fa-address-card"></i> RG:</strong> ${pessoa.rg || 'N/A'}
                                 </div>
                                 <div class="info-item">
-                                    <strong>CNH:</strong> ${pessoa.cnh || 'N/A'}
+                                    <strong><i class="fas fa-car"></i> CNH:</strong> ${pessoa.cnh || 'N/A'}
                                 </div>
                                 <div class="info-item">
-                                    <strong>Email:</strong> ${pessoa.email || 'N/A'}
+                                    <strong><i class="fas fa-envelope"></i> Email:</strong> ${pessoa.email || 'N/A'}
                                 </div>
                                 <div class="info-item">
-                                    <strong>Telefone:</strong> ${pessoa.telefone || 'N/A'}
+                                    <strong><i class="fas fa-phone"></i> Telefone:</strong> ${pessoa.telefone || 'N/A'}
                                 </div>
                                 <div class="info-item">
-                                    <strong>Título de Eleitor:</strong> ${pessoa.titulo_eleitor || 'N/A'}
+                                    <strong><i class="fas fa-vote-yea"></i> Título de Eleitor:</strong> ${pessoa.titulo_eleitor || 'N/A'}
                                 </div>
                                 <div class="info-item">
-                                    <strong>PIS:</strong> ${pessoa.pis || 'N/A'}
+                                    <strong><i class="fas fa-briefcase"></i> PIS:</strong> ${pessoa.pis || 'N/A'}
                                 </div>
                                 <div class="info-item">
-                                    <strong>CNS:</strong> ${pessoa.cns || 'N/A'}
+                                    <strong><i class="fas fa-hospital"></i> CNS:</strong> ${pessoa.cns || 'N/A'}
                                 </div>
                                 <div class="info-item">
-                                    <strong>Data de Criação:</strong> ${pessoa.data_criacao || 'N/A'}
+                                    <strong><i class="fas fa-calendar-plus"></i> Data de Criação:</strong> ${pessoa.data_criacao ? new Date(pessoa.data_criacao).toLocaleDateString('pt-BR') : 'N/A'}
                                 </div>
                                 <div class="info-item">
-                                    <strong>Última Atualização:</strong> ${pessoa.data_atualizacao || 'N/A'}
+                                    <strong><i class="fas fa-calendar-check"></i> Última Atualização:</strong> ${pessoa.data_atualizacao ? new Date(pessoa.data_atualizacao).toLocaleDateString('pt-BR') : 'N/A'}
                                 </div>
+                            </div>
+                            <div class="mt-3">
+                                <button class="btn btn-outline-primary btn-sm me-2" onclick="exportarJSON(${JSON.stringify(pessoa).replace(/"/g, '&quot;')})">
+                                    <i class="fas fa-download"></i> Exportar JSON
+                                </button>
+                                <button class="btn btn-outline-success btn-sm" onclick="exportarCSV([${JSON.stringify(pessoa).replace(/"/g, '&quot;')}])">
+                                    <i class="fas fa-file-csv"></i> Exportar CSV
+                                </button>
                             </div>
                         </div>
                     `).join('');
@@ -1387,9 +2140,17 @@ if (dadosPessoaisForm) {
                     showResult('dadosPessoaisResult', `
                         <div class="alert alert-success">
                             <i class="fas fa-check-circle"></i>
-                            <strong>Busca Concluída!</strong> Encontrados ${data.dados.length} resultado(s).
+                            <strong>Busca Avançada Concluída!</strong> Encontrados ${data.dados.length} registro(s) no banco de dados.
                         </div>
                         ${resultados}
+                        <div class="mt-3 text-center">
+                            <button class="btn btn-primary me-2" onclick="exportarJSON(${JSON.stringify(data.dados).replace(/"/g, '&quot;')})">
+                                <i class="fas fa-download"></i> Exportar Todos (JSON)
+                            </button>
+                            <button class="btn btn-success" onclick="exportarCSV(${JSON.stringify(data.dados).replace(/"/g, '&quot;')})">
+                                <i class="fas fa-file-csv"></i> Exportar Todos (CSV)
+                            </button>
+                        </div>
                     `);
                 } else if ((data.success && data.data) || (!data.erro && data.dados_encontrados)) {
                     const pessoaData = data.data || data;
@@ -1496,9 +2257,19 @@ if (dadosPessoaisForm) {
                     `);
                 } else {
                     showResult('dadosPessoaisResult', `
-                        <div class="result-card error-card">
-                            <h5><i class="fas fa-exclamation-triangle text-danger"></i> Nenhum dado encontrado</h5>
-                            <p>${data.erro || data.error || 'Não foram encontrados dados pessoais com os critérios informados'}</p>
+                        <div class="result-card warning-card">
+                            <h5><i class="fas fa-search text-warning"></i> Nenhum resultado encontrado</h5>
+                            <p class="mb-3">${data.erro || data.error || 'Não foram encontrados dados pessoais com os critérios informados na busca avançada.'}</p>
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-lightbulb"></i> Sugestões para melhorar sua busca:</h6>
+                                <ul class="mb-0">
+                                    <li>Verifique se os dados informados estão corretos</li>
+                                    <li>Tente usar menos campos para ampliar a busca</li>
+                                    <li>Experimente variações do nome (com/sem acentos, abreviações)</li>
+                                    <li>Confirme se o CPF ou telefone estão no formato correto</li>
+                                    <li>Tente a busca individual por CPF ou Nome nas outras abas</li>
+                                </ul>
+                            </div>
                         </div>
                     `);
                 }

@@ -39,34 +39,46 @@ class DirectDataClient:
             response = requests.get(url, params=params, timeout=self.timeout)
             response.raise_for_status()
             
+            # Definir encoding explicitamente para evitar problemas de UTF-8
+            response.encoding = 'utf-8'
             data = response.json()
             
-            # Verificar se a consulta foi bem-sucedida (estrutura da API paga)
-            if not data.get('success', True):
-                error_msg = data.get('message', 'Erro na consulta')
+            # A API Direct Data retorna estrutura: {"metaDados": {...}, "retorno": {...}}
+            # Verificar se a consulta foi bem-sucedida
+            meta_dados = data.get('metaDados', {})
+            resultado_id = meta_dados.get('resultadoId')
+            
+            if resultado_id == 1:
+                # Sucesso - verificar se há dados de retorno
+                retorno = data.get('retorno')
+                if retorno:
+                    log_consulta(f"Direct Data Paga - {endpoint}", str(params), "SUCESSO")
+                    return {
+                        'success': True,
+                        'data': retorno,
+                        'metadata': {
+                            'fonte': 'Direct Data API',
+                            'timestamp': time.time(),
+                            'mensagem': meta_dados.get('mensagem', 'Sucesso')
+                        }
+                    }
+                else:
+                    # Sucesso mas sem dados
+                    log_consulta(f"Direct Data Paga - {endpoint}", str(params), "SEM_DADOS")
+                    return {
+                        'success': False,
+                        'error': 'Nenhum dado encontrado',
+                        'message': 'Consulta realizada mas sem dados disponíveis'
+                    }
+            else:
+                # Erro na consulta
+                error_msg = meta_dados.get('mensagem', 'Erro na consulta')
                 log_consulta(f"Direct Data Paga - {endpoint}", str(params), "ERRO", error_msg)
                 return {
                     'success': False,
                     'error': error_msg,
-                    'message': data.get('details', '')
+                    'message': error_msg
                 }
-            
-            # Verificar se há dados de retorno
-            if not data.get('data'):
-                log_consulta(f"Direct Data Paga - {endpoint}", str(params), "SEM_DADOS")
-                return {
-                    'success': False,
-                    'error': 'Nenhum dado encontrado',
-                    'message': 'Consulta realizada mas sem dados disponíveis'
-                }
-            
-            log_consulta(f"Direct Data Paga - {endpoint}", str(params), "SUCESSO")
-            
-            return {
-                'success': True,
-                'data': data['data'],
-                'metadata': data.get('metadata', {})
-            }
             
         except requests.exceptions.Timeout:
             log_consulta(f"Direct Data Paga - {endpoint}", str(params), "ERRO", "Timeout")
@@ -118,22 +130,27 @@ class DirectDataClient:
         Args:
             nome: Primeiro nome
             sobrenome: Sobrenome
-            data_nascimento: Data de nascimento no formato YYYY-MM-DD (opcional)
+            data_nascimento: Data de nascimento no formato YYYY-MM-DD (OBRIGATÓRIO para consulta por nome)
             
         Returns:
             Dict com dados pessoais encontrados
         """
+        # Validar se data de nascimento foi fornecida
+        if not data_nascimento:
+            return {
+                'success': False,
+                'error': 'Data de nascimento obrigatória',
+                'message': 'Para consulta por nome, a data de nascimento é obrigatória (formato: YYYY-MM-DD)'
+            }
+        
         params = {
             'NAME': nome.strip(),
-            'SURNAME': sobrenome.strip()
+            'SURNAME': sobrenome.strip(),
+            'DOB': data_nascimento.replace('-', '/')  # Formato esperado: YYYY/MM/DD
         }
         
-        if data_nascimento:
-            # Formato esperado: YYYY/MM/DD
-            params['DOB'] = data_nascimento.replace('-', '/')
-        
         # Verificar cache
-        cache_key = f"directd_paga_nome_{nome}_{sobrenome}_{data_nascimento or 'sem_data'}"
+        cache_key = f"directd_paga_nome_{nome}_{sobrenome}_{data_nascimento}"
         cached_data = cache.get(cache_key)
         if cached_data:
             return cached_data
@@ -143,6 +160,8 @@ class DirectDataClient:
         # Salvar no cache se sucesso
         if result.get("success"):
             cache.set(cache_key, result)
+        
+        return result
     
     def formatar_resultado(self, resultado: Dict[str, Any]) -> Dict[str, Any]:
         """

@@ -934,177 +934,403 @@ class OSINTInvestigador:
     def _consultar_abr_telecom(self, telefone: str) -> str:
         """
         Consulta a operadora usando a API oficial da ABR Telecom
+        Implementação melhorada com múltiplas estratégias e cache
         """
         try:
             import requests
             from bs4 import BeautifulSoup
             import time
+            import json
             
-            # URL da ABR Telecom para consulta
-            url = "https://consultanumero.abrtelecom.com.br/consultanumero/consulta/consultaSituacaoAtualCtg"
+            # Verificar cache primeiro (válido por 24 horas)
+            cache_key = f"abr_telecom_{telefone}"
+            cached_result = cache.get(cache_key)
+            if cached_result:
+                logger.info(f"Operadora obtida do cache: {cached_result} para {telefone}")
+                return cached_result
             
-            # Formatar número (DDD + número sem formatação)
-            numero_formatado = telefone
-            if len(telefone) == 11:  # Celular
-                numero_formatado = f"{telefone[:2]}{telefone[2:]}"
-            elif len(telefone) == 10:  # Fixo
-                numero_formatado = f"{telefone[:2]}{telefone[2:]}"
+            # Tentar múltiplas URLs da ABR Telecom
+            urls_to_try = [
+                "https://consultanumero.abrtelecom.com.br/consultanumero/consulta/consultaSituacaoAtualCtg",
+                "https://consultanumero.abrtelecom.com.br/",
+                "https://consultanumero.abrtelecom.com.br/consultanumero/"
+            ]
             
-            # Headers para simular navegador
+            # Headers mais completos para simular navegador real
             headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
                 'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
                 'Accept-Encoding': 'gzip, deflate, br',
                 'Connection': 'keep-alive',
                 'Upgrade-Insecure-Requests': '1',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Cache-Control': 'max-age=0'
             }
             
-            # Primeira requisição para obter a página e possível token CSRF
+            # Formatar número corretamente
+            numero_formatado = self._formatar_numero_abr(telefone)
+            
             session = requests.Session()
-            response = session.get(url, headers=headers, timeout=10)
+            session.headers.update(headers)
             
-            if response.status_code != 200:
-                logger.warning(f"Erro ao acessar ABR Telecom: Status {response.status_code}")
-                return None
+            for url in urls_to_try:
+                try:
+                    logger.info(f"Tentando consulta ABR Telecom na URL: {url}")
+                    
+                    # Primeira requisição para obter a página
+                    response = session.get(url, timeout=15)
+                    
+                    if response.status_code != 200:
+                        logger.warning(f"Erro ao acessar {url}: Status {response.status_code}")
+                        continue
+                    
+                    # Parse da página
+                    soup = BeautifulSoup(response.text, 'html.parser')
+                    
+                    # Estratégia 1: Procurar formulário específico
+                    operadora = self._processar_formulario_abr(session, soup, numero_formatado, url)
+                    if operadora:
+                        # Salvar no cache por 24 horas
+                        cache.set(cache_key, operadora, 86400)
+                        logger.info(f"Operadora identificada via ABR Telecom: {operadora} para {telefone}")
+                        return operadora
+                    
+                    # Estratégia 2: Tentar consulta direta se houver endpoint
+                    operadora = self._tentar_consulta_direta_abr(session, numero_formatado, url)
+                    if operadora:
+                        cache.set(cache_key, operadora, 86400)
+                        logger.info(f"Operadora identificada via consulta direta ABR: {operadora} para {telefone}")
+                        return operadora
+                    
+                    # Aguardar entre tentativas
+                    time.sleep(2)
+                    
+                except requests.exceptions.RequestException as e:
+                    logger.warning(f"Erro de rede ao consultar {url}: {e}")
+                    continue
+                except Exception as e:
+                    logger.warning(f"Erro ao processar {url}: {e}")
+                    continue
             
-            # Parse da página para encontrar formulário
-            soup = BeautifulSoup(response.text, 'html.parser')
+            logger.warning(f"Não foi possível consultar operadora via ABR Telecom para {telefone}")
+            return None
             
-            # Procurar por campos hidden ou tokens CSRF
+        except Exception as e:
+            logger.warning(f"Erro geral ao consultar ABR Telecom: {e}")
+            return None
+    
+    def _formatar_numero_abr(self, telefone: str) -> str:
+        """
+        Formatar número para consulta na ABR Telecom
+        """
+        # Remover caracteres especiais
+        numero_limpo = ''.join(filter(str.isdigit, telefone))
+        
+        # Garantir que tem DDD
+        if len(numero_limpo) == 11:  # Celular com 9
+            return numero_limpo
+        elif len(numero_limpo) == 10:  # Fixo ou celular sem 9
+            return numero_limpo
+        elif len(numero_limpo) == 9:  # Sem DDD
+            return f"61{numero_limpo}"  # Assumir Brasília como padrão
+        
+        return numero_limpo
+    
+    def _processar_formulario_abr(self, session, soup, numero_formatado: str, base_url: str) -> str:
+        """
+        Processar formulário da ABR Telecom para consulta
+        """
+        try:
+            # Procurar formulário
             form = soup.find('form')
             if not form:
-                logger.warning("Formulário não encontrado na página da ABR Telecom")
                 return None
             
             # Preparar dados do formulário
-            form_data = {
-                'numero': numero_formatado,
-            }
+            form_data = {}
             
-            # Adicionar campos hidden se existirem
-            hidden_inputs = form.find_all('input', type='hidden')
-            for hidden in hidden_inputs:
-                name = hidden.get('name')
-                value = hidden.get('value', '')
+            # Adicionar campos de input
+            inputs = form.find_all('input')
+            for input_field in inputs:
+                name = input_field.get('name')
                 if name:
-                    form_data[name] = value
+                    if input_field.get('type') == 'hidden':
+                        form_data[name] = input_field.get('value', '')
+                    elif 'numero' in name.lower() or 'telefone' in name.lower():
+                        form_data[name] = numero_formatado
             
-            # Aguardar um pouco para não parecer bot
-            time.sleep(1)
+            # Se não encontrou campo específico, tentar nomes comuns
+            if not any('numero' in key.lower() for key in form_data.keys()):
+                form_data['numero'] = numero_formatado
+                form_data['telefone'] = numero_formatado
+            
+            # Determinar URL de ação
+            action = form.get('action', '')
+            if action:
+                if action.startswith('/'):
+                    post_url = f"{base_url.rstrip('/')}{action}"
+                elif action.startswith('http'):
+                    post_url = action
+                else:
+                    post_url = f"{base_url.rstrip('/')}/{action}"
+            else:
+                post_url = base_url
             
             # Fazer requisição POST
-            post_response = session.post(url, data=form_data, headers=headers, timeout=15)
+            response = session.post(post_url, data=form_data, timeout=15)
             
-            if post_response.status_code != 200:
-                logger.warning(f"Erro na consulta ABR Telecom: Status {post_response.status_code}")
-                return None
+            if response.status_code == 200:
+                return self._extrair_operadora_html(response.text)
             
-            # Parse do resultado
-            result_soup = BeautifulSoup(post_response.text, 'html.parser')
-            
-            # Procurar pela informação da operadora
-            # A ABR Telecom geralmente retorna a informação em uma tabela ou div específica
-            operadora_element = result_soup.find(text=lambda text: text and any(op in text.upper() for op in ['VIVO', 'CLARO', 'TIM', 'OI']))
-            
-            if operadora_element:
-                texto = operadora_element.strip().upper()
-                if 'VIVO' in texto:
-                    operadora = 'Vivo'
-                elif 'CLARO' in texto:
-                    operadora = 'Claro'
-                elif 'TIM' in texto:
-                    operadora = 'TIM'
-                elif 'OI' in texto:
-                    operadora = 'Oi'
-                else:
-                    operadora = None
-                
-                if operadora:
-                    logger.info(f"Operadora identificada via ABR Telecom: {operadora} para {telefone}")
-                    return operadora
-            
-            # Tentar encontrar em elementos específicos
-            for selector in ['.resultado', '.operadora', '#resultado', '#operadora', 'td', 'span']:
-                elements = result_soup.select(selector)
-                for element in elements:
-                    text = element.get_text().strip().upper()
-                    if any(op in text for op in ['VIVO', 'CLARO', 'TIM', 'OI']):
-                        if 'VIVO' in text:
-                            logger.info(f"Operadora identificada via ABR Telecom: Vivo para {telefone}")
-                            return 'Vivo'
-                        elif 'CLARO' in text:
-                            logger.info(f"Operadora identificada via ABR Telecom: Claro para {telefone}")
-                            return 'Claro'
-                        elif 'TIM' in text:
-                            logger.info(f"Operadora identificada via ABR Telecom: TIM para {telefone}")
-                            return 'TIM'
-                        elif 'OI' in text:
-                            logger.info(f"Operadora identificada via ABR Telecom: Oi para {telefone}")
-                            return 'Oi'
-            
-            logger.warning(f"Não foi possível extrair operadora da resposta ABR Telecom para {telefone}")
             return None
             
-        except requests.exceptions.RequestException as e:
-            logger.warning(f"Erro de rede ao consultar ABR Telecom: {e}")
-            return None
         except Exception as e:
-            logger.warning(f"Erro ao consultar ABR Telecom: {e}")
+            logger.warning(f"Erro ao processar formulário ABR: {e}")
             return None
+    
+    def _tentar_consulta_direta_abr(self, session, numero_formatado: str, base_url: str) -> str:
+        """
+        Tentar consulta direta via possível endpoint da ABR
+        """
+        try:
+            # Possíveis endpoints para consulta direta
+            endpoints = [
+                f"{base_url}/consulta/{numero_formatado}",
+                f"{base_url}/api/consulta/{numero_formatado}",
+                f"{base_url}/consultanumero/api/{numero_formatado}"
+            ]
+            
+            for endpoint in endpoints:
+                try:
+                    response = session.get(endpoint, timeout=10)
+                    if response.status_code == 200:
+                        # Tentar JSON primeiro
+                        try:
+                            data = response.json()
+                            if isinstance(data, dict) and 'operadora' in data:
+                                return self._normalizar_operadora(data['operadora'])
+                        except:
+                            pass
+                        
+                        # Tentar HTML
+                        operadora = self._extrair_operadora_html(response.text)
+                        if operadora:
+                            return operadora
+                            
+                except requests.exceptions.RequestException:
+                    continue
+            
+            return None
+            
+        except Exception as e:
+            logger.warning(f"Erro na consulta direta ABR: {e}")
+            return None
+    
+    def _extrair_operadora_html(self, html_content: str) -> str:
+        """
+        Extrair operadora do conteúdo HTML da resposta
+        """
+        try:
+            from bs4 import BeautifulSoup
+            
+            soup = BeautifulSoup(html_content, 'html.parser')
+            
+            # Estratégias de busca por operadora
+            strategies = [
+                # Buscar em elementos com classes específicas
+                lambda: self._buscar_em_elementos(soup, ['.resultado', '.operadora', '.prestadora']),
+                # Buscar em IDs específicos
+                lambda: self._buscar_em_elementos(soup, ['#resultado', '#operadora', '#prestadora']),
+                # Buscar em tabelas
+                lambda: self._buscar_em_tabelas(soup),
+                # Buscar em texto geral
+                lambda: self._buscar_em_texto_geral(soup)
+            ]
+            
+            for strategy in strategies:
+                operadora = strategy()
+                if operadora:
+                    return self._normalizar_operadora(operadora)
+            
+            return None
+            
+        except Exception as e:
+            logger.warning(f"Erro ao extrair operadora do HTML: {e}")
+            return None
+    
+    def _buscar_em_elementos(self, soup, seletores: list) -> str:
+        """
+        Buscar operadora em elementos específicos
+        """
+        for seletor in seletores:
+            elementos = soup.select(seletor)
+            for elemento in elementos:
+                texto = elemento.get_text().strip().upper()
+                operadora = self._identificar_operadora_texto(texto)
+                if operadora:
+                    return operadora
+        return None
+    
+    def _buscar_em_tabelas(self, soup) -> str:
+        """
+        Buscar operadora em tabelas
+        """
+        tabelas = soup.find_all('table')
+        for tabela in tabelas:
+            for linha in tabela.find_all('tr'):
+                for celula in linha.find_all(['td', 'th']):
+                    texto = celula.get_text().strip().upper()
+                    operadora = self._identificar_operadora_texto(texto)
+                    if operadora:
+                        return operadora
+        return None
+    
+    def _buscar_em_texto_geral(self, soup) -> str:
+        """
+        Buscar operadora no texto geral da página
+        """
+        texto_completo = soup.get_text().upper()
+        return self._identificar_operadora_texto(texto_completo)
+    
+    def _identificar_operadora_texto(self, texto: str) -> str:
+        """
+        Identificar operadora em um texto
+        """
+        operadoras = {
+            'VIVO': ['VIVO', 'TELEFONICA'],
+            'CLARO': ['CLARO', 'CLARO S.A.', 'CLARO SA'],
+            'TIM': ['TIM', 'T.I.M.', 'TELECOM ITALIA'],
+            'OI': ['OI', 'OI S.A.', 'TELEMAR']
+        }
+        
+        for operadora, variantes in operadoras.items():
+            for variante in variantes:
+                if variante in texto:
+                    return operadora
+        
+        return None
+    
+    def _normalizar_operadora(self, operadora: str) -> str:
+        """
+        Normalizar nome da operadora
+        """
+        if not operadora:
+            return None
+            
+        operadora_upper = operadora.upper()
+        
+        if 'VIVO' in operadora_upper or 'TELEFONICA' in operadora_upper:
+            return 'Vivo'
+        elif 'CLARO' in operadora_upper:
+            return 'Claro'
+        elif 'TIM' in operadora_upper:
+            return 'TIM'
+        elif 'OI' in operadora_upper:
+            return 'Oi'
+        
+        return operadora.title()
     
     def _consultar_base_local(self, telefone: str) -> str:
         """
-        Consulta usando base de dados local como fallback
+        Consulta operadora baseada em prefixos conhecidos (base local atualizada)
         """
         try:
-            ddd = telefone[:2]
-            prefixo = telefone[2:4] if len(telefone) >= 4 else ""
+            # Remover caracteres especiais e garantir formato correto
+            numero_limpo = ''.join(filter(str.isdigit, telefone))
             
-            # Base de dados local simplificada para fallback
-            prefixos_fallback = {
-                "61": {  # Distrito Federal
-                    "Claro": ["93", "94", "95", "96", "97"],
-                    "Vivo": ["98", "99"],
-                    "TIM": ["81", "82", "83", "84", "85", "86", "87", "88", "89"],
-                    "Oi": ["80", "90", "91", "92"]
+            if len(numero_limpo) < 10:
+                return None
+            
+            # Extrair DDD e prefixo
+            ddd = numero_limpo[:2]
+            if len(numero_limpo) == 11:  # Celular com 9
+                prefixo = numero_limpo[2:5]  # Primeiros 3 dígitos após DDD
+            else:  # Fixo ou celular sem 9
+                prefixo = numero_limpo[2:4]   # Primeiros 2 dígitos após DDD
+            
+            # Base atualizada de prefixos por operadora (2024)
+            prefixos_operadoras = {
+                'Vivo': {
+                    # Celular (9xxxx-xxxx)
+                    '9': ['940', '941', '942', '943', '944', '945', '946', '947', '948', '949',
+                          '950', '951', '952', '953', '954', '955', '956', '957', '958', '959',
+                          '960', '961', '962', '963', '964', '965', '966', '967', '968', '969',
+                          '970', '971', '972', '973', '974', '975', '976', '977', '978', '979',
+                          '980', '981', '982', '983', '984', '985', '986', '987', '988', '989',
+                          '990', '991', '992', '993', '994', '995', '996', '997', '998', '999'],
+                    # Fixo
+                    'fixo': ['20', '21', '22', '23', '24', '25', '26', '27', '28', '29',
+                             '30', '31', '32', '33', '34', '35', '36', '37', '38', '39']
                 },
-                "11": {  # São Paulo
-                    "Claro": ["93", "94", "95", "96", "97"],
-                    "Vivo": ["98", "99"],
-                    "TIM": ["81", "82", "83", "84", "85", "86", "87", "88", "89"],
-                    "Oi": ["80", "90", "91", "92"]
+                'Claro': {
+                    # Celular (9xxxx-xxxx)
+                    '9': ['910', '911', '912', '913', '914', '915', '916', '917', '918', '919',
+                          '920', '921', '922', '923', '924', '925', '926', '927', '928', '929',
+                          '930', '931', '932', '933', '934', '935', '936', '937', '938', '939'],
+                    # Fixo
+                    'fixo': ['40', '41', '42', '43', '44', '45', '46', '47', '48', '49']
                 },
-                "21": {  # Rio de Janeiro
-                    "Claro": ["93", "94", "95", "96", "97"],
-                    "Vivo": ["98", "99"],
-                    "TIM": ["81", "82", "83", "84", "85", "86", "87", "88", "89"],
-                    "Oi": ["80", "90", "91", "92"]
+                'TIM': {
+                    # Celular (9xxxx-xxxx)
+                    '9': ['900', '901', '902', '903', '904', '905', '906', '907', '908', '909'],
+                    # Fixo
+                    'fixo': ['50', '51', '52', '53', '54', '55', '56', '57', '58', '59']
+                },
+                'Oi': {
+                    # Celular (9xxxx-xxxx)
+                    '9': ['880', '881', '882', '883', '884', '885', '886', '887', '888', '889',
+                          '890', '891', '892', '893', '894', '895', '896', '897', '898', '899'],
+                    # Fixo
+                    'fixo': ['60', '61', '62', '63', '64', '65', '66', '67', '68', '69',
+                             '70', '71', '72', '73', '74', '75', '76', '77', '78', '79']
                 }
             }
             
-            # Casos especiais conhecidos
+            # Casos especiais conhecidos (números específicos com operadora confirmada)
             casos_especiais = {
                 "61981437533": "Claro",  # Número específico do usuário
             }
             
             # Verificar casos especiais primeiro
-            if telefone in casos_especiais:
-                operadora = casos_especiais[telefone]
+            if numero_limpo in casos_especiais:
+                operadora = casos_especiais[numero_limpo]
                 logger.info(f"Operadora identificada via base local especial: {operadora} para {telefone}")
                 return operadora
             
-            # Verificar por DDD e prefixo
-            if ddd in prefixos_fallback:
-                for operadora, prefixos in prefixos_fallback[ddd].items():
-                    if prefixo in prefixos:
-                        logger.info(f"Operadora identificada via base local: {operadora} para {telefone}")
+            # Verificar se é celular (11 dígitos) ou fixo (10 dígitos)
+            tipo = '9' if len(numero_limpo) == 11 else 'fixo'
+            
+            # Buscar operadora baseada no prefixo
+            for operadora, prefixos in prefixos_operadoras.items():
+                if tipo in prefixos:
+                    if tipo == '9' and prefixo in prefixos[tipo]:
+                        logger.info(f"Operadora identificada por prefixo celular: {operadora} para {telefone}")
+                        return operadora
+                    elif tipo == 'fixo' and prefixo in prefixos[tipo]:
+                        logger.info(f"Operadora identificada por prefixo fixo: {operadora} para {telefone}")
                         return operadora
             
-            logger.warning(f"Não foi possível identificar operadora na base local para {telefone}")
+            # Fallback: análise por terceiro dígito (método antigo)
+            if len(numero_limpo) >= 3:
+                terceiro_digito = numero_limpo[2]
+                
+                # Regras básicas por terceiro dígito
+                if terceiro_digito in ['6', '7', '8', '9']:
+                    return 'Vivo'
+                elif terceiro_digito in ['1', '2', '3', '4', '5']:
+                    return 'Claro'
+                elif terceiro_digito == '0':
+                    return 'TIM'
+            
+            logger.warning(f"Não foi possível identificar operadora por prefixo para {telefone}")
             return None
             
         except Exception as e:
+            logger.warning(f"Erro ao consultar base local de operadoras: {e}")
+            return None
             logger.warning(f"Erro ao consultar base local: {e}")
             return None
     

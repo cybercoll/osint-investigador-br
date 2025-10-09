@@ -157,3 +157,9 @@ tmp/
 .env.production.local
 config_local.py
 secrets.json
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+osint_database.db
