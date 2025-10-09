@@ -748,8 +748,8 @@ def api_consultar_cpf_completo():
             resultado_api = consultar_dados_pessoais_cpf(cpf_limpo)
             
             if resultado_api.get('success') and resultado_api.get('data'):
-                data_api = resultado_api.get('data', {})
-                retorno = data_api.get('retorno', data_api)
+                # A Direct Data API retorna os dados diretamente em 'data'
+                retorno = resultado_api.get('data', {})
                 
                 # Extrair dados da Direct Data API
                 if retorno.get('name'):
@@ -799,6 +799,13 @@ def api_consultar_cpf_completo():
                     
                     if enderecos_formatados:
                         dados_formatados['enderecos'] = enderecos_formatados
+                
+                # Informações adicionais
+                if retorno.get('salaryRange'):
+                    dados_formatados['faixa_salarial'] = retorno.get('salaryRange')
+                
+                if retorno.get('estimatedSalary'):
+                    dados_formatados['salario_estimado'] = retorno.get('estimatedSalary')
                         
         except Exception as api_error:
             print(f"Erro na Direct Data API: {api_error}")
